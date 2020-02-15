@@ -1,0 +1,25 @@
+#answer-pick-state-wrapper{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    #answer-pick-state-cards-list{
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+        padding: 32px 16px;
+        > * {
+            margin: 10px 14px;
+            flex: 1 0 calc(~"50% - 28px");
+        }
+        .game-card-anim-enter{
+            transform: translate(100%, 100%) rotate(145deg);
+        }
+        .game-card-anim-enter-active {
+            transform: unset;
+            transition: all .2s linear;
+        }
+    }
+}
