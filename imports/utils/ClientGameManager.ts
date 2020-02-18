@@ -3,7 +3,7 @@ import { GameMessageQueue } from './Constants';
 import { Meteor } from 'meteor/meteor';
 import { meteorCall } from "./Common.utils";
 import { GameMessage } from './GameData.utils';
-import { GameMessageEnum, DrawCardMessage, ReadQuestionMessage } from "./Types";
+import { GameMessageEnum, DrawCardMessage, ReadQuestionMessage, PlayersDataMessage, AllAnswersReadyMessage, ReceivePointsMessage, MaxAnswersOnQuestionMessage } from './Types';
 
 const ENQUEUED_EMIT_TIME = 200;
 
@@ -24,6 +24,10 @@ export class ClientGameManager extends EventTarget {
     }
     addEventListener(e: 'draw-card', l: (ev: CustomEvent<DrawCardMessage>) => void): void;
     addEventListener(e: 'next-turn', l: (ev: CustomEvent<ReadQuestionMessage>) => void): void;
+    addEventListener(e: 'players-data', l: (ev: CustomEvent<PlayersDataMessage>) => void): void;
+    addEventListener(e: 'answers-ready', l: (ev: CustomEvent<AllAnswersReadyMessage>) => void): void;
+    addEventListener(e: 'receive-points', l: (ev: CustomEvent<ReceivePointsMessage>) => void): void;
+    addEventListener(e: 'max-answers', l: (ev: CustomEvent<MaxAnswersOnQuestionMessage>) => void): void;
     addEventListener<T extends GameMessage>(eventName: string, listener: (event: CustomEvent<T>) => void) {
         return super.addEventListener(eventName, listener);
     }
@@ -50,6 +54,14 @@ export class ClientGameManager extends EventTarget {
                         return this.enqueuedEmit('draw-card', message);
                     case GameMessageEnum.ReadQuestion:
                         return this.emit('next-turn', message);
+                    case GameMessageEnum.PlayersData:
+                        return this.emit("players-data", message);
+                    case GameMessageEnum.AllAnswersReady:
+                        return this.emit('answers-ready', message);
+                    case GameMessageEnum.ReceivePoints:
+                        return this.emit("receive-points", message);
+                    case GameMessageEnum.MaxAnswersOnQuestion:
+                        return this.emit('max-answers', message);
                 }
             }
         })

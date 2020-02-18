@@ -11,3 +11,7 @@ export async function meteorCall<T>(methodName: string, ...args) {
         })
     })
 }
+
+export const safeHandler = (cb) => {
+    return (...args) => cb && cb(...args);
+}

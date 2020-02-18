@@ -1,8 +1,13 @@
 import React from 'react';
 import { getAnswerByIndex } from '/imports/utils/GameData.utils';
+import Draggable, { DraggableEventHandler } from 'react-draggable';
+import { safeHandler } from '/imports/utils/Common.utils';
 
 type AnswerCardPropsType = {
-    answerIndex: number
+    answerIndex: number,
+    onDrag?: DraggableEventHandler,
+    onDrop?: DraggableEventHandler,
+    disableDrag?: boolean
 }
 
 type AnswerCardStateType = {
@@ -31,12 +36,16 @@ export class AnswerCard extends React.Component<AnswerCardPropsType, AnswerCardS
 
     render() {
         const { answerText } = this.state;
+        const answerLength = answerText ? answerText.length : 0;
+        const decreaseFontSize = answerLength > 15;
         return (
-            <div className="answer-card-wrapper">
-                <div className="answer-card-text">
-                    {answerText}
+            <Draggable disabled={!!this.props.disableDrag} handle=".answer-card-wrapper" onDrag={safeHandler(this.props.onDrag)} onStop={safeHandler(this.props.onDrop)}>
+                <div className="answer-card-wrapper">
+                    <div className={"answer-card-text"+(decreaseFontSize ? ' small-font': '')}>
+                        {answerText}
+                    </div>
                 </div>
-            </div>
+            </Draggable>
         )
     }
 }

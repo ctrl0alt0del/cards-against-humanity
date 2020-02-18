@@ -1,0 +1,39 @@
+.players-info-wrapper{
+    display: flex;
+    justify-content: center;
+    width: 0;
+    height: 100%;
+    margin:0 auto;
+    position: relative;
+    .players-info-wrapper-label{
+        height: 100%;
+        display: flex;
+        align-items: center;
+    }
+    .player-badge-wrapper{
+        position: relative;
+        flex: 1;
+        height: 100%;
+        margin:0 5px;
+        border-radius: 100%;
+        .size-helper{
+            width: auto;
+            height: 100%;
+            visibility: hidden;
+        }
+        .player-badge {
+            height: 0;
+            min-height: 100%;
+            position: relative;
+            top: -112%;
+            left:0;
+            background-color: #454545;
+            box-shadow: 0px 0px 5px 2px #45454599;
+            border-radius: 100%;
+            &.highlighted {
+                background-color: green;
+                box-shadow: 0px 0px 5px 2px #003f0099;
+            }
+        }
+    }
+}

@@ -31,10 +31,11 @@ export class QuestionCard extends React.Component<QuestionCardPropsType, Questio
 
     render() {
         const { questionText } = this.state;
+        const textToDisplay = questionText.replace(/\_/g, '_______');
         return (
             <div className="question-card-wrapper">
                 <div className="question-card-text-wrapper">
-                    {questionText}
+                    {textToDisplay}
                 </div>
             </div>
         )
