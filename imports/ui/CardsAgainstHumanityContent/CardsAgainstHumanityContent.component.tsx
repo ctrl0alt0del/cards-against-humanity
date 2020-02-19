@@ -1,6 +1,5 @@
 import React from 'react';
-import { GameState } from '/imports/utils/Game.utils';
-import { PlayerData, AnswerSelectionType, CAHGameData, CAHSessionGameData, CAHTurnType } from '/imports/utils/Types';
+import { CAHGameData, CAHSessionGameData, CAHTurnType } from '/imports/utils/Types';
 import { QuestionReadState } from '../QuestionReadState/QuestionReadState.component';
 import { AnswerList } from '../AnswerList/AnswerList.component';
 import { PlayerType, GameSessionType } from '../../utils/Types';
@@ -12,15 +11,19 @@ import { CAHTurnsCollection } from '/imports/api/CAHTurn/CAHTurn.collection';
 type CardsAgainstHumanityContentPropsType = {
     player: PlayerType<CAHGameData>,
     session: GameSessionType<CAHSessionGameData>,
-    players: PlayerType<CAHGameData>[],
-    turns: CAHTurnType[]
+    players: PlayerType<CAHGameData>[]
 }
 
 type CardsAgainstHumanityContentStateType = {
     playUpdateScoreAnim: boolean,
 }
 
-class CardsAgainstHumanityContentPure extends React.Component<CardsAgainstHumanityContentPropsType, CardsAgainstHumanityContentStateType> {
+
+type CAHTrackerPropsType = {
+    turns: CAHTurnType[];
+};
+
+class CardsAgainstHumanityContentPure extends React.Component<CardsAgainstHumanityContentPropsType & CAHTrackerPropsType, CardsAgainstHumanityContentStateType> {
     state: CardsAgainstHumanityContentStateType = {
         playUpdateScoreAnim: false
     }
@@ -82,7 +85,8 @@ class CardsAgainstHumanityContentPure extends React.Component<CardsAgainstHumani
         );
     }
 }
-export const CardsAgainstHumanityContent = withTracker(props => {
+
+export const CardsAgainstHumanityContent = withTracker<CAHTrackerPropsType, CardsAgainstHumanityContentPropsType>(props => {
     Meteor.subscribe("turns");
     const turns = CAHTurnsCollection.find({}).fetch();
     return {
