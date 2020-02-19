@@ -1,5 +1,6 @@
 import React from 'react';
-import { PlayerData } from '../../utils/Types';
+import { PlayerType, GeneralPlayerType, GameType } from '../../utils/Types';
+import { ClientPlayer } from '../../utils/ClientPlayerManager';
 
 export enum DisplayPlayersInfoTypeEnum {
     Ready,
@@ -7,7 +8,7 @@ export enum DisplayPlayersInfoTypeEnum {
 }
 
 type PlayersInfoPropsType = {
-    players: PlayerData[],
+    players: GeneralPlayerType[],
     infoType: DisplayPlayersInfoTypeEnum
 }
 
@@ -21,19 +22,19 @@ export class PlayersInfo extends React.Component<PlayersInfoPropsType> {
                 </div>
                 {players.map(data => {
                     let highlight = false;
-                    if(data.isCurentPlayer && infoType === DisplayPlayersInfoTypeEnum.Answered) {
+                    if (data._id === ClientPlayer.me()._id && infoType === DisplayPlayersInfoTypeEnum.Answered) {
                         return null;
                     }
                     switch (infoType) {
                         case DisplayPlayersInfoTypeEnum.Ready:
-                            highlight = data.ready;
+                            highlight = data.readyFor !== GameType.None;
                             break;
                         case DisplayPlayersInfoTypeEnum.Answered:
-                            highlight = data.answered;
+                            highlight = data.gameData.answered;
                             break;
                     }
                     return (
-                        <div className={"player-badge-wrapper" + (highlight ? " highlighted" : '')} key={data.sessionId}>
+                        <div className={"player-badge-wrapper" + (highlight ? " highlighted" : '')} key={data._id}>
                             <img src="https://dummyimage.com/100x100/999/000" className="size-helper" />
                             <div className={"player-badge" + (highlight ? " highlighted" : '')} />
                         </div>

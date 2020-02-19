@@ -1,8 +1,8 @@
 import React from 'react';
-import { getQuestionByIndex } from '/imports/utils/GameData.utils';
+import { getQuestionById } from '/imports/utils/GameData.utils';
 
 type QuestionCardPropsType = {
-    questionIndex: number
+    questionId: string
 }
 
 type QuestionCardStateType = {
@@ -21,9 +21,9 @@ export class QuestionCard extends React.Component<QuestionCardPropsType, Questio
 
     async resolveQuestionData() {
         const {
-            questionIndex
+            questionId
         } = this.props;
-        const qData = await getQuestionByIndex(questionIndex);
+        const qData = await getQuestionById(questionId);
         this.setState({
             questionText: qData.text
         })

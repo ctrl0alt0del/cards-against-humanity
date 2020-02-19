@@ -6,6 +6,7 @@ import { MaxCardInHand } from '/imports/utils/Constants';
 import { QuestionCollection } from '../QuestionCollection/QuestionCollection';
 import { Meteor } from 'meteor/meteor';
 import { Random } from 'meteor/random';
+import { GameSessionManager } from '../GameSession/GameSession';
 
 export class ServerGameManager {
 
@@ -186,6 +187,7 @@ export class ServerGameManager {
     }
 
     private initGame() {
+        GameSessionManager.startNewSession(this.connectedUserData.map(userData => userData.sessionId));
         this.resetGameState();
         for (const userData of this.connectedUserData) {
             const userId = userData.sessionId;

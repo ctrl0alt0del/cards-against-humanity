@@ -3,6 +3,10 @@ import { fillQuestionCollection, fillAnswerCollection } from './ServerStartup.ut
 import "../imports/api/QuestionCollection";
 import "../imports/api/AnswerCollection";
 import "../imports/api/GameManager";
+import '../imports/api/Player';
+import '../imports/api/GameSession';
+import '../imports/api/CAHTurn';
+import '../imports/api/CardsAgainsHumanity';
 
 Meteor.startup(() => {
     fillQuestionCollection();

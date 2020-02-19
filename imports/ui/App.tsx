@@ -1,29 +1,22 @@
 import React from 'react';
 import { GameState } from '../utils/Game.utils';
-import { QuestionReadState } from './QuestionReadState/QuestionReadState.component';
-import { AnswerList } from './AnswerList/AnswerList.component';
 import { withTracker } from "meteor/react-meteor-data";
 import { ClientGameManager } from '../utils/ClientGameManager';
-import { PlayerData, AnswerSelectionType } from '../utils/Types';
+import { GameType, GeneralGameSessionType, GeneralPlayerType } from '../utils/Types';
 import { PlayersInfo, DisplayPlayersInfoTypeEnum } from './PlayersInfo/PlayersInfo.component';
-import { meteorCall } from '../utils/Common.utils';
-import { CSSTransition } from 'react-transition-group';
+import { Meteor } from 'meteor/meteor';
+import { ClientPlayer } from '../utils/ClientPlayerManager';
+import { PlayerCollection } from '../api/Player/PlayerCollection';
+import { GameSessionCollection } from "../api/GameSession/GameSession.collection";
+import { CardsAgainstHumanityContent } from './CardsAgainstHumanityContent/CardsAgainstHumanityContent.component';
 
 type AppPropsType = {
-
+    players: GeneralPlayerType[],
+    gameSession: GeneralGameSessionType,
+    me: GeneralPlayerType
 }
 
-type AppStateType = {
-    gameState: GameState,
-    currentAnswerCardIndixies: number[],
-    questionIndex: number,
-    playersData: PlayerData[],
-    selectedAnswers: number[],
-    answersForQuestion: AnswerSelectionType[],
-    gameScore: number,
-    playUpdateScoreAnim: boolean,
-    maxAnswersForCurrentQuestion: number
-}
+type AppStateType = {}
 
 class App extends React.Component<AppPropsType, AppStateType> {
     gameManager = ClientGameManager.getInstance();
@@ -39,7 +32,7 @@ class App extends React.Component<AppPropsType, AppStateType> {
         maxAnswersForCurrentQuestion: 1
     }
 
-    private readonly onAnswerSelected = (answerIndex: number): void => {
+    /*private readonly onAnswerSelected = (answerIndex: number): void => {
         const nextSelectedAnswers = [...this.state.selectedAnswers, answerIndex];
 
         this.setState({
@@ -59,7 +52,7 @@ class App extends React.Component<AppPropsType, AppStateType> {
         })
     }
     private readonly onAcceptAnswers = () => {
-        if(this.state.selectedAnswers.length === this.state.maxAnswersForCurrentQuestion) {
+        if (this.state.selectedAnswers.length === this.state.maxAnswersForCurrentQuestion) {
             meteorCall("selectAnswer", this.state.selectedAnswers);
         }
     }
@@ -70,21 +63,29 @@ class App extends React.Component<AppPropsType, AppStateType> {
             currentAnswerCardIndixies: this.state.currentAnswerCardIndixies.concat(this.state.selectedAnswers)
         })
     }
-
+    */
     get isReady() {
-        const currentUserData = this.state.playersData.find(data => data.isCurentPlayer);
+        const currentUserData = ClientPlayer.me();
         if (currentUserData) {
-            return currentUserData.ready;
+            return currentUserData.readyFor !== GameType.None;
         } else {
             return false;
         }
     }
 
     componentDidMount() {
-        this.initGameManagerListener();
+        /*this.initGameManagerListener();*/
+
+        Meteor.call("register", ClientPlayer.getLastConnectionId(), (err, connId) => {
+            if (err) {
+                console.error(err);
+            } else {
+                localStorage.setItem('connectionId', connId);
+            }
+        })
     }
 
-    initGameManagerListener() {
+    /*initGameManagerListener() {
         this.gameManager.addEventListener("draw-card", event => {
             const cardIndex = event.detail.messageParams.cardIndex;
             this.setState({
@@ -132,86 +133,62 @@ class App extends React.Component<AppPropsType, AppStateType> {
                 maxAnswersForCurrentQuestion: answerCount
             })
         })
-    }
+    }*/
 
     render() {
-        const {
-            gameState,
-            currentAnswerCardIndixies,
-            questionIndex,
-            playersData,
-            selectedAnswers,
-            answersForQuestion,
-            gameScore,
-            playUpdateScoreAnim,
-            maxAnswersForCurrentQuestion
-        } = this.state;
+        const { players, me, gameSession } = this.props;
         let appContent;
-        switch (gameState) {
-            case GameState.Initial:
-                appContent = (
-                    <div id="intial-content-wrapper">
-                        <div id="connected-users-wrapper">
-                            <PlayersInfo players={playersData} infoType={DisplayPlayersInfoTypeEnum.Ready} />
-                        </div>
-                        {
-                            this.isReady ?
-                                (
-                                    <div id="start-button-expl">
-                                        Очікуйте коли інші підключені гравці будуть готові.
-                                    </div>
-                                ) : (
-                                    <div id="start-button" onClick={this.startGameHandler}>
-                                        Start
-                                    </div>
-                                )
-                        }
+        if (gameSession) {
+            switch (gameSession.gameType) {
+                case GameType.CardsAgainstHumanity:
+                    appContent = <CardsAgainstHumanityContent player={me} session={gameSession} players={players}/>
+            }
+        } else {
+            appContent = (
+                <div id="intial-content-wrapper">
+                    <div id="connected-users-wrapper">
+                        <PlayersInfo players={players} infoType={DisplayPlayersInfoTypeEnum.Ready} />
                     </div>
-                );
-                break;
-            case GameState.QuestionRead:
-                appContent = <QuestionReadState
-                    questionIndex={questionIndex}
-                    players={playersData}
-                    answers={answersForQuestion}
-                    onBestAnswerSelected={this.onBestAnswerSelected}
-                />
-                break;
-            case GameState.AnswerList:
-                appContent = <AnswerList
-                    selectedAnswers={selectedAnswers}
-                    answerIndexies={currentAnswerCardIndixies}
-                    maxAnswersCount={maxAnswersForCurrentQuestion}
-                    onAnswerSelected={this.onAnswerSelected}
-                    onResetAnswersList={this.onResetAnswersList}
-                    onAcceptAnswers={this.onAcceptAnswers}
-                />
-                break;
+                    {
+                        this.isReady ?
+                            (
+                                <div id="start-button-expl">
+                                    Очікуйте коли інші підключені гравці будуть готові.
+                                </div>
+                            ) : (
+                                <div id="start-button" onClick={this.startGameHandler}>
+                                    Start
+                                </div>
+                            )
+                    }
+                </div>
+            );
         }
         return (
             <div id="app">
-                {gameState !== GameState.Initial && (
-                    <div id="app-status-line">
-                        <div id="score-wrapper">
-                            <CSSTransition in={playUpdateScoreAnim} classNames="score-update" timeout={300}>
-                                <div id="score-card-icon">{gameScore}</div>
-                            </CSSTransition>
-                        </div>
-                    </div>
-                )}
                 {appContent}
             </div>
         );
     }
 
     private startGameHandler = async () => {
-        await this.gameManager.startGame();
+        Meteor.call("readyFor", GameType.CardsAgainstHumanity, err => {
+            if (err) {
+                console.error(err);
+            }
+        })
     }
 }
 
 export default withTracker(() => {
-    ClientGameManager.getInstance().init();
+    Meteor.subscribe('me');
+    Meteor.subscribe('allPlayers');
+    Meteor.subscribe("session");
+    const players = PlayerCollection.find({}).fetch();
+    const gameSession = GameSessionCollection.findOne({});
     return {
-
+        players,
+        me: ClientPlayer.me(),
+        gameSession
     }
 })(App);

@@ -1,10 +1,10 @@
 import React from 'react';
-import { getAnswerByIndex } from '/imports/utils/GameData.utils';
+import { getAnswerById } from '/imports/utils/GameData.utils';
 import Draggable, { DraggableEventHandler } from 'react-draggable';
 import { safeHandler } from '/imports/utils/Common.utils';
 
 type AnswerCardPropsType = {
-    answerIndex: number,
+    answerId: string,
     onDrag?: DraggableEventHandler,
     onDrop?: DraggableEventHandler,
     disableDrag?: boolean
@@ -26,9 +26,9 @@ export class AnswerCard extends React.Component<AnswerCardPropsType, AnswerCardS
 
     async resolveAnswerCardData() {
         const {
-            answerIndex
+            answerId: answerIndex
         } = this.props;
-        const answerData = await getAnswerByIndex(answerIndex);
+        const answerData = await getAnswerById(answerIndex);
         this.setState({
             answerText: answerData.text
         })

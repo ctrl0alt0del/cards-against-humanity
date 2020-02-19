@@ -3,10 +3,10 @@ import { DrawCardMessage, ReadQuestionMessage, QuestionType, AnswerType, Players
 
 export type GameMessage = DrawCardMessage | ReadQuestionMessage | PlayersDataMessage | AllAnswersReadyMessage | ReceivePointsMessage | MaxAnswersOnQuestionMessage;
 
-export async function getQuestionByIndex(index: number) {
-    return meteorCall<QuestionType>('getQuestionByIndex', index);
+export async function getQuestionById(id: string) {
+    return meteorCall<QuestionType>('getQuestionById', id);
 }
 
-export async function getAnswerByIndex(index: number) {
-    return meteorCall<AnswerType>('getAnswerByIndex', index); 
+export async function getAnswerById(id: string) {
+    return meteorCall<AnswerType>('getAnswerById', id); 
 }
