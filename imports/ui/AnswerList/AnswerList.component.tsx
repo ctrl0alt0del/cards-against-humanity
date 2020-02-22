@@ -5,10 +5,14 @@ import Draggable, { DraggableEvent } from 'react-draggable';
 import { ImmediateCSSTransition } from '../Helpers/ImmediateCSSTransition.component';
 import { Meteor } from 'meteor/meteor';
 import { getQuestionById } from '/imports/utils/GameData.utils';
+import { GameButton } from '../Helpers/GameButton';
+import { CAHTurnType } from '../../utils/Types';
+import { ClientPlayer } from '../../utils/ClientPlayerManager';
 
 type AnswerListPropsType = {
     answers: string[],
-    currentQuestionId: string
+    currentQuestionId: string,
+    turn: CAHTurnType
 }
 
 type AnswerListStateType = {
@@ -27,7 +31,7 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
     }
 
     componentDidUpdate(prevProps: AnswerListPropsType) {
-        if(this.props.currentQuestionId && prevProps.currentQuestionId !== this.props.currentQuestionId) {
+        if (this.props.currentQuestionId && prevProps.currentQuestionId !== this.props.currentQuestionId) {
             this.resolveMaxAnswersForCurrentQuestion();
         }
     }
@@ -39,7 +43,7 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
             answerWasAccepted: false
         })
         const qData = await getQuestionById(currQId);
-        if(qData) {
+        if (qData) {
             this.setState({
                 maxAnswersCount: qData.answerCount
             })
@@ -66,7 +70,7 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
 
     onDropAnswerHandler(answerId: string, event: DraggableEvent) {
         if (this.state.selectedAnswers.length >= this.state.maxAnswersCount) {
-            return;
+            return false;
         } else {
             const draggableEl = event.target as HTMLElement;
             const isDraggedOverArea = this.isElementOverSelectableArea(draggableEl);
@@ -75,8 +79,10 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
                     dropableAreaHighlighted: false
                 })
                 this.onAnswerSelected(answerId);
+                return true;
             }
         }
+        return false;
 
     }
 
@@ -88,7 +94,7 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
 
     onAcceptAnswerButtonClick = () => {
         Meteor.call("selectAnswersForCurrentQuestion", this.state.selectedAnswers, err => {
-            if(err) {
+            if (err) {
                 console.error(err);
             }
         })
@@ -107,14 +113,16 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
     private isElementOverSelectableArea(draggableEl: HTMLElement) {
         const boundingRect = draggableEl.getBoundingClientRect();
         const { top, height } = boundingRect;
-        const isDraggedOverArea = (top + height) / window.innerHeight < 0.4;
+        const isDraggedOverArea = (top + height) / window.innerHeight < 0.3;
         return isDraggedOverArea;
     }
 
     render() {
-        const { answers } = this.props;
-        const { dropableAreaHighlighted, answerWasAccepted,selectedAnswers, maxAnswersCount } = this.state;
+        const { answers, turn } = this.props;
+        const me = ClientPlayer.me();
+        const { dropableAreaHighlighted, answerWasAccepted, selectedAnswers, maxAnswersCount } = this.state;
         const selectedAnswerClass = selectedAnswers && selectedAnswers.length === maxAnswersCount ? 'selected' : (dropableAreaHighlighted ? 'highlighted' : '');
+        const myAnswerInTurn = turn?.answers.some(answerData => answerData.playerId === me?._id) || false;
         return (
             <div id="answer-pick-state-wrapper">
                 <div id="selected-answer-wrapper" className={selectedAnswerClass}>
@@ -127,18 +135,20 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
                         )}
                 </div>
                 <div id="select-answer-control-buttons">
-                    <div id="reset-button" onClick={this.onResetAnswerListButtonClick}>
-                        Reset
-                    </div>
-                    {selectedAnswers.length === maxAnswersCount && !answerWasAccepted && (
-                        <div id="accept-button" onClick={this.onAcceptAnswerButtonClick}>
+                    {selectedAnswers.length > 0 && !answerWasAccepted && !myAnswerInTurn && (
+                        <GameButton onClick={this.onResetAnswerListButtonClick}>
+                            Reset
+                        </GameButton>
+                    )}
+                    {selectedAnswers.length === maxAnswersCount && (!answerWasAccepted && !myAnswerInTurn) && (
+                        <GameButton onClick={this.onAcceptAnswerButtonClick}>
                             Accept
-                        </div>
+                        </GameButton>
                     )}
                 </div>
                 <TransitionGroup component="div" id="answer-pick-state-cards-list">
                     {answers.map((answerId) => {
-                        if(selectedAnswers.includes(answerId)) {
+                        if (selectedAnswers.includes(answerId)) {
                             return;
                         }
                         return (

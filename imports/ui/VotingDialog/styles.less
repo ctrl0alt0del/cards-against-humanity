@@ -1,0 +1,40 @@
+@inline-avatar-image-size: 30px;
+
+.voting-dialog-wrapper {
+    padding      : 4px;
+    border-radius: 5px;
+
+    .voting-dialog-text {
+        padding: 16px 32px;
+
+        &.with-images {
+            line-height: 35px;
+        }
+
+        .text-with-image {
+            float      : left;
+            display    : flex;
+            align-items: center;
+        }
+
+        .inline-avatar-image {
+            width        : @inline-avatar-image-size;
+            height       : @inline-avatar-image-size;
+            max-width    : @inline-avatar-image-size;
+            min-width    : @inline-avatar-image-size;
+            max-height   : @inline-avatar-image-size;
+            min-height   : @inline-avatar-image-size;
+            border-radius: 100%;
+            object-fit   : cover;
+            margin       : 0 5px;
+
+        }
+    }
+
+    .voting-dialog-buttons {
+        >* {
+            margin: 16px auto;
+            width : 90%
+        }
+    }
+}

@@ -2,10 +2,11 @@ import { insertAsync, removeAsync, updateAsync } from '../utils/MongoUtils';
 import { GameSessionCollection } from "./GameSession.collection";
 import { GameType, GameSessionType, GeneralGameSessionType, SessionGameData } from '../../utils/Types';
 import { Mongo } from 'meteor/mongo';
+import { PlayersManager } from '../Player/Player';
 
 class GameSessionManagerClass {
     constructor() {
-        this.removeSessions();
+        //this.removeSessions();
     }
     updateSessionById(sessionId: string, modifier: Mongo.Modifier<GeneralGameSessionType>) {
         return updateAsync(GameSessionCollection, { _id: sessionId }, modifier, { multi: false });
@@ -16,13 +17,13 @@ class GameSessionManagerClass {
     removePlayerFromAllSessions(playerId: string) {
         const playerSessions = GameSessionCollection.find({ playersId: { $in: [playerId] } });
         return playerSessions.map(session => {
-            return this.removePlayerFromSession(session._id, playerId, session);
+            return this.removePlayerFromSession(session._id, playerId, false, session);
         })
     }
 
     getPlayerCurrentGameSession(playerId: string) {
         const userSessions = GameSessionCollection.find({ playersId: { $in: [playerId] } }).fetch();
-        if(userSessions.length > 1) {
+        if (userSessions.length > 1) {
             console.warn("User has non-closed sessions");
         }
         return userSessions[0];
@@ -39,6 +40,9 @@ class GameSessionManagerClass {
     }
 
     async addPlayerToSession(sessionId: string, playerId: string) {
+        if (this.isPlayerDisabledInSession(sessionId, playerId)) {
+            return;
+        }
         await this.removePlayerFromAllSessions(playerId);
         return this.updateSessionById(sessionId, {
             $addToSet: {
@@ -47,18 +51,26 @@ class GameSessionManagerClass {
         })
     }
 
-    removePlayerFromSession(sessionId: string, playerId: string, session?: GeneralGameSessionType) {
+    isPlayerDisabledInSession(sessionId: string, playerId: string) {
+        const session = this.getSession(sessionId);
+        return session.disabledPlayersId.includes(playerId);
+    }
+
+    removePlayerFromSession(sessionId: string, playerId: string, denyAccess: boolean, session?: GeneralGameSessionType) {
         if (!session) {
             session = GameSessionCollection.findOne({ _id: sessionId });
         }
         const players = session.playersId;
         const sessionSelector = { _id: session._id };
+        PlayersManager.makePlayerReadyFor(playerId, GameType.None);
         if (players.length === 1 && players[0] === playerId) {//i.e only this user
             return removeAsync(GameSessionCollection, sessionSelector);
         } else {
+            const disabledPlayersId = session.disabledPlayersId || [];
             return updateAsync(GameSessionCollection, sessionSelector, {
                 $set: {
-                    playersId: players.filter(pId => pId !== playerId)
+                    playersId: players.filter(pId => pId !== playerId),
+                    disabledPlayersId: denyAccess ? disabledPlayersId.concat(playerId) : disabledPlayersId
                 }
             }, { multi: false })
         }
@@ -68,6 +80,7 @@ class GameSessionManagerClass {
         const sessionObject = {
             playersId: [],
             gameType,
+            disabledPlayersId: [],
             sessionGameData: initialGameData
         }
         return insertAsync(GameSessionCollection, sessionObject);

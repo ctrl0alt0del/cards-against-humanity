@@ -1,12 +1,12 @@
-import { meteorCall } from "./Common.utils"
+import { meteorCall, EntityFetcher } from "./Common.utils"
 import { DrawCardMessage, ReadQuestionMessage, QuestionType, AnswerType, PlayersDataMessage, AllAnswersReadyMessage, ReceivePointsMessage, MaxAnswersOnQuestionMessage } from './Types';
 
 export type GameMessage = DrawCardMessage | ReadQuestionMessage | PlayersDataMessage | AllAnswersReadyMessage | ReceivePointsMessage | MaxAnswersOnQuestionMessage;
 
-export async function getQuestionById(id: string) {
+export const getQuestionById = EntityFetcher(async function (id: string) {
     return meteorCall<QuestionType>('getQuestionById', id);
-}
+});
 
-export async function getAnswerById(id: string) {
-    return meteorCall<AnswerType>('getAnswerById', id); 
-}
+export const getAnswerById = EntityFetcher(async function (id: string) {
+    return meteorCall<AnswerType>('getAnswerById', id);
+});

@@ -5,12 +5,13 @@ import { updateAsync, insertAsync, removeAsync } from '../utils/MongoUtils';
 import { GameType, PlayerType, GameData } from '/imports/utils/Types';
 import { Mongo } from 'meteor/mongo';
 import { CAHManager } from '../CardsAgainsHumanity/GAHManager';
+import { GameSessionManager } from '../GameSession/GameSession';
 
 
 
 class PlayersManagerClass {
     constructor() {
-        this.removeAllOfflinePlayers();
+        //this.removeAllOfflinePlayers();
     }
     private updateOne(selector: Mongo.Selector<PlayerType<GameData>>, modifier: Mongo.Modifier<PlayerType<GameData>>) {
         return updateAsync(PlayerCollection, selector, modifier, { multi: false });
@@ -37,7 +38,7 @@ class PlayersManagerClass {
                 console.log(`user reconnected (${prevConnectionId} -> ${connectionId})`)
                 playerId = player._id;
                 await this.updateOne({ _id: player._id }, {
-                    $set: { connectionId: connectionId }
+                    $set: { connectionId: connectionId, online: true }
                 });
             }
         }
@@ -56,7 +57,8 @@ class PlayersManagerClass {
             connectionId: connectionId,
             readyFor: GameType.None,
             gameData: null,
-            online: true
+            online: true,
+            avatarId: null
         });
     }
 
@@ -73,15 +75,29 @@ class PlayersManagerClass {
     async makePlayerReadyFor(playerId: string, gameType: GameType) {
         await this.updateOne({ _id: playerId }, {
             $set: {
-                readyFor: gameType
+                readyFor: gameType,
+                answered: false
             }
         });
+        if(gameType === GameType.None) {
+            return;
+        }
         const allPlayersOnline = PlayerCollection.find({ online: true }).fetch();
         const numberOfTotalPlayers = allPlayersOnline.length;
         const numberOfReadyPlayers = allPlayersOnline.filter(player => player.readyFor === GameType.CardsAgainstHumanity).length;
-        if (numberOfReadyPlayers === numberOfTotalPlayers) {
+        const playerInSession = allPlayersOnline.find(player => !!GameSessionManager.getPlayerCurrentGameSession(player._id));
+        if(playerInSession) {
+            const session = GameSessionManager.getPlayerCurrentGameSession(playerInSession._id);
+            CAHManager.connectPlayersToSession([playerId], session._id);
+        } else if (numberOfReadyPlayers === numberOfTotalPlayers) {
             CAHManager.startGame(allPlayersOnline);
         }
+    }
+
+    setAvatarForPlayer(playerId: string, avatarId: string) {
+        return this.updateById(playerId, {
+            $set: { avatarId }
+        })
     }
 }
 

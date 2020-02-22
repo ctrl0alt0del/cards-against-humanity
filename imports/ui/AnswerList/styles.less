@@ -11,21 +11,11 @@
         display: flex;
         justify-content: space-between;
         padding: 0 40px;
-        #reset-button, #accept-button {
-            border: 1px solid #333;
-            box-shadow: 0px 0px 4px 1px #afafaf99;
-            padding: 4px 8px;
-            text-align: center;
-            height: 100%;
+        > * {
             max-width: 120px;
-            min-width: 100px;
-            background-color: white;
-            user-select: none;
-
-        }
+        };
     }
     #selected-answer-wrapper {
-        flex           : 1 0;
         margin         : 30px auto;
         display        : flex;
         justify-content: center;
@@ -34,7 +24,7 @@
         color          : #8a8a8a;
         padding        : 32px;
         align-self     : flex-start;
-        max-height     : 30%;
+        max-height     : 0;
         width: 80%;
 
         &.highlighted {

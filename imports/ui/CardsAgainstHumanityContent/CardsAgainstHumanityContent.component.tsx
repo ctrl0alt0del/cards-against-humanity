@@ -7,6 +7,8 @@ import { CSSTransition } from 'react-transition-group';
 import { withTracker } from 'meteor/react-meteor-data';
 import { Meteor } from 'meteor/meteor';
 import { CAHTurnsCollection } from '/imports/api/CAHTurn/CAHTurn.collection';
+import { PlayersStatusLine } from '../PlayerStatusLine/PlayersStatusLine.component';
+import { GameButton } from '../Helpers/GameButton';
 
 type CardsAgainstHumanityContentPropsType = {
     player: PlayerType<CAHGameData>,
@@ -31,12 +33,20 @@ class CardsAgainstHumanityContentPure extends React.Component<CardsAgainstHumani
     componentDidUpdate(prevProps: CardsAgainstHumanityContentPropsType) {
         const prevScore = prevProps.player?.gameData?.score || 0;
         const currScore = this.props.player?.gameData?.score || 0;
-        if(prevScore !== currScore) {
+        if (prevScore !== currScore) {
             navigator.vibrate(200);
             this.setState({
                 playUpdateScoreAnim: true
             })
         }
+    }
+
+    private readonly leaveGame = () => {
+        Meteor.call("leaveGame", err => {
+            if(err) {
+                console.error(err);
+            }
+        })
     }
 
     render() {
@@ -47,11 +57,6 @@ class CardsAgainstHumanityContentPure extends React.Component<CardsAgainstHumani
         const currentTurnId = session?.sessionGameData.currentTurnId || null;
         const currentTurnData = turns && turns.find(t => t._id === currentTurnId);
         const isCurrentPlayerReader = currentTurnData && player ? currentTurnData.readerId === player?._id : false;
-        /*switch (gameState) {
-            /*case GameState.QuestionRead:
-                appContent = 
-                break;
-        }*/
         let displayedContent;
         const questionId = currentTurnData?.questionId;
         const answersToQuestion = currentTurnData?.answers;
@@ -68,6 +73,7 @@ class CardsAgainstHumanityContentPure extends React.Component<CardsAgainstHumani
                 <AnswerList
                     currentQuestionId={questionId}
                     answers={cards}
+                    turn={currentTurnData}
                 />
             )
         }
@@ -79,8 +85,14 @@ class CardsAgainstHumanityContentPure extends React.Component<CardsAgainstHumani
                             <div id="score-card-icon">{gameScore}</div>
                         </CSSTransition>
                     </div>
+                    <GameButton onClick={this.leaveGame}>
+                        Покинути гру
+                    </GameButton>
                 </div>
-                {displayedContent}
+                <div id="game-main-content">
+                    {displayedContent}
+                    <PlayersStatusLine players={players} turn={currentTurnData} turns={turns}/>
+                </div>
             </React.Fragment>
         );
     }

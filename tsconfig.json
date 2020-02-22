@@ -7,7 +7,7 @@
     "allowJs": true,
     "checkJs": false,
     "jsx": "preserve",
-    "incremental": true,
+    "experimentalDecorators": true,
     "noEmit": true,
 
     /* Additional Checks */

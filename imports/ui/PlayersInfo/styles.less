@@ -1,38 +1,49 @@
-.players-info-wrapper{
-    display: flex;
+.players-info-wrapper {
+    display        : flex;
     justify-content: center;
-    width: 0;
-    height: 100%;
-    margin:0 auto;
-    position: relative;
-    .players-info-wrapper-label{
-        height: 100%;
-        display: flex;
+    width          : 0;
+    height         : 100%;
+    margin         : 0 auto;
+    position       : relative;
+
+    .players-info-wrapper-label {
+        height     : 100%;
+        display    : flex;
         align-items: center;
     }
-    .player-badge-wrapper{
-        position: relative;
-        flex: 1;
-        height: 100%;
-        margin:0 5px;
+
+    .player-badge-wrapper {
+        position     : relative;
+        flex         : 1;
+        height       : 100%;
+        margin       : 0 5px;
         border-radius: 100%;
-        .size-helper{
-            width: auto;
-            height: 100%;
+
+        .size-helper {
+            width     : auto;
+            height    : 100%;
             visibility: hidden;
         }
+
         .player-badge {
-            height: 0;
-            min-height: 100%;
-            position: relative;
-            top: -112%;
-            left:0;
+            height          : 0;
+            min-height      : 100%;
+            position        : relative;
+            top             : -112%;
+            left            : 0;
             background-color: #454545;
-            box-shadow: 0px 0px 5px 2px #45454599;
-            border-radius: 100%;
-            &.highlighted {
-                background-color: green;
-                box-shadow: 0px 0px 5px 2px #003f0099;
+            box-shadow      : 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+            border-radius   : 100%;
+            display         : flex;
+            justify-content : stretch;
+            align-items     : stretch;
+            padding         : 3px;
+
+
+            .player-info-avatar-image {
+                width        : 100%;
+                object-fit   : cover;
+                border-radius: 100%;
             }
         }
     }

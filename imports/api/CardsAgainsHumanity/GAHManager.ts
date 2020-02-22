@@ -1,4 +1,4 @@
-import { CAHGameData, PlayerType, GameType, CAHSessionGameData, CAHTurnType } from '../../utils/Types';
+import { CAHGameData, PlayerType, GameType, CAHSessionGameData } from '../../utils/Types';
 import { GameSessionManager } from '../GameSession/GameSession';
 import { PlayerCollection } from '../Player/PlayerCollection';
 import { MaxCardInHand } from '../../utils/Constants';
@@ -22,21 +22,17 @@ class CardsAgainstHumanityManagerClass {
         this.startNewTurn(firstReader._id, sessionId);
     }
 
-    addInitialGameDataIfNeccessary(playerId: string) {
-        const targetPlayer = PlayerCollection.findOne({ _id: playerId });
-        if (!targetPlayer.gameData) {
-            return updateAsync(PlayerCollection, { _id: playerId }, {
-                $set: {
-                    gameData: {
-                        answered: false,
-                        cardsOnHand: [],
-                        isReader: false,
-                        score: 0,
-                        type: GameType.CardsAgainstHumanity
-                    }
+    addInitialGameData(playerId: string) {
+        return updateAsync(PlayerCollection, { _id: playerId }, {
+            $set: {
+                gameData: {
+                    answered: false,
+                    cardsOnHand: [],
+                    score: 0,
+                    type: GameType.CardsAgainstHumanity
                 }
-            }, { multi: false })
-        }
+            }
+        }, { multi: false })
     }
 
     async connectPlayersToSession(playerIdList: string[], sessionId: string) {
@@ -45,7 +41,7 @@ class CardsAgainstHumanityManagerClass {
         for (const playerId of playerIdList) {
             if (!targetSession.playersId.includes(playerId)) {
                 await GameSessionManager.addPlayerToSession(sessionId, playerId);
-                await this.addInitialGameDataIfNeccessary(playerId);
+                await this.addInitialGameData(playerId);
                 let cardsToDraw = cardPool.slice(0, 6);
                 cardPool = cardPool.slice(6);
                 this.giveCardsToPlayer(playerId, cardsToDraw.map(card => card._id), 200)
@@ -180,6 +176,16 @@ class CardsAgainstHumanityManagerClass {
         const session = GameSessionManager.getPlayerCurrentGameSession(currentPlayerId);
         const sessionId = session._id;
         const currentTurn = this.getCurrentTurnData(sessionId);
+        currentTurn.answers.forEach(answ => {
+            if (answ.playerId === answererId) {
+                answ.isWinner = true;
+            }
+        });
+        updateAsync(CAHTurnsCollection, { _id: currentTurn._id }, {
+            $set: {
+                answers: currentTurn.answers
+            }
+        }, { multi: false });
         const currTurnQuestion = QuestionCollection.findOne({ _id: currentTurn.questionId });
         this.incrementUserScore(answererId, 1);
         this.giveEachPlayerCards(sessionId, currTurnQuestion.answerCount, session.playersId.filter(pId => pId !== currentPlayerId));

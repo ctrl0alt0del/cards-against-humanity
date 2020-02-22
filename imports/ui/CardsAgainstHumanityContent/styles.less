@@ -1,0 +1,50 @@
+@app-status-line-height: 40px;
+@player-status-line-height: 50px;
+#game-main-content {
+    width: 100%;
+    height: calc(~"100% - @{app-status-line-height}");
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    #answer-pick-state-wrapper {
+        height: calc(~"100% - @{player-status-line-height}")
+    }
+    #player-status-line-wrapper {
+        height: @player-status-line-height;
+    }
+}
+#app-status-line {
+    display: flex;
+    align-items: center;
+    height: @app-status-line-height;
+    width: 100%;
+    padding: 4px 16px;
+    .game-button {
+        max-width: 95px;
+        margin: 1px 0 0 10px;
+        min-height: 30px!important;
+        font-size: 0.6rem;
+    }
+    #score-wrapper{
+        height: 100%;
+        color: black;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        #score-card-icon{
+            height: 100%;
+            width: 22px;
+            border-radius: 4px;
+            background-color: black;
+            margin: 0 5px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            &.score-update-enter {
+                transform: scale(1.5) translateY(15px);
+                transition: transform .3s ease-out;
+            }
+        }
+    }
+}

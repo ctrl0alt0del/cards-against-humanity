@@ -1,0 +1,107 @@
+@avatar-size: 110px;
+
+.styled-input {
+    width: 100%;
+    height: 30px;
+    border: none;
+    border-bottom: 2px solid black;
+    padding: 16px 24px;
+    background-color: transparent;
+    font-size: 1rem;
+    font-family: "Exo 2";
+    outline: none;
+}
+#intial-content-wrapper{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    width: 100%;
+    height: 100%;
+    padding-bottom: 70px;
+    #connected-users-wrapper{
+        height: 40px;
+        width: 70%;
+        margin:0 auto 30px;
+    }
+    #start-button-expl{
+        margin: 32px 16px;
+        padding: 8px 16px;
+        text-align: justify;
+        color: #af3f3f;
+        font-size: 0.8rem;
+        border-top: 1px solid #5f5f5f;
+    }
+    #start-button {
+        margin: 6px 32px;
+        border: 1px solid #8a8a8a;
+        border-radius: 4px;
+        text-align: center;
+        padding: 15px 0;
+        font-size: 1.1rem;
+        background-color: white;
+        min-height: 40px;
+        user-select: none;
+        box-shadow: 0px 2px 3px 1px #afafaf;
+        &:hover, &:active {
+            box-shadow: none;
+        }
+    }
+}
+#initials-screen-buttons-wrapper{
+    width: 85%;
+    margin: 30px auto;
+    .game-button {
+        margin: 15px 0;
+        max-height: 60px;
+    }
+    #player-avatar-wrapper{
+        min-width: @avatar-size;
+        max-width: @avatar-size;
+        height: @avatar-size;
+        height: @avatar-size;
+        text-align: center;
+        border-radius: 100%;
+        font-size: 3rem;
+        border: 1px solid #818181;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0px 15px 0 0;
+        #avatar-file-picker{
+            display: none;
+        }
+    }
+    #player-name-input-wrapper{
+        flex: 1 0;
+    }
+}
+
+#avatar-selection-wrapper{
+    padding:16px;
+    background-color: black;
+    
+    #avatar-selection-wrapper-content{
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .avatar-selection-item{
+        margin: 12px 14px;
+        width: 75px;
+        display: flex;
+        flex-direction: column;
+        img {
+            border: 3px solid white;
+            height: 75px;
+            width: 75px;
+            object-fit: cover;
+            border-radius: 100%;
+        }
+        .avatar-name{
+            color: white;
+            text-align: center;
+            font-size: 0.7rem;
+        }
+    }
+}

@@ -1,24 +1,27 @@
 import React from 'react';
 import { getAnswerById } from '/imports/utils/GameData.utils';
-import Draggable, { DraggableEventHandler } from 'react-draggable';
+import Draggable, { DraggableEventHandler, DraggableEvent } from 'react-draggable';
 import { safeHandler } from '/imports/utils/Common.utils';
 
 type AnswerCardPropsType = {
     answerId: string,
     onDrag?: DraggableEventHandler,
-    onDrop?: DraggableEventHandler,
+    onDrop?: (e: DraggableEvent) => boolean,
     disableDrag?: boolean
 }
 
 type AnswerCardStateType = {
-    answerText: string
+    answerText: string,
+    overridePosition: { x: number, y: number }
 }
 
 export class AnswerCard extends React.Component<AnswerCardPropsType, AnswerCardStateType> {
 
     state = {
-        answerText: ''
+        answerText: '',
+        overridePosition: { x: 0, y: 0 }
     }
+
 
     componentDidMount() {
         this.resolveAnswerCardData();
@@ -34,14 +37,37 @@ export class AnswerCard extends React.Component<AnswerCardPropsType, AnswerCardS
         })
     }
 
+    private readonly onDragStart = () => {
+        /*this.setState({
+            overridePosition: null
+        })*/
+    }
+
+
+    private readonly onDragStop = (event) => {
+        const res = safeHandler(this.props.onDrop)(event);
+        if (!res) {
+            this.setState({
+                overridePosition: { x: 0, y: 0 }
+            });
+        }
+    };
+
     render() {
-        const { answerText } = this.state;
+        const { answerText, overridePosition } = this.state;
         const answerLength = answerText ? answerText.length : 0;
         const decreaseFontSize = answerLength > 15;
         return (
-            <Draggable disabled={!!this.props.disableDrag} handle=".answer-card-wrapper" onDrag={safeHandler(this.props.onDrag)} onStop={safeHandler(this.props.onDrop)}>
+            <Draggable
+                disabled={!!this.props.disableDrag}
+                handle=".answer-card-wrapper"
+                onStart={this.onDragStart}
+                onDrag={safeHandler(this.props.onDrag)}
+                onStop={this.onDragStop}
+                position={overridePosition}
+            >
                 <div className="answer-card-wrapper">
-                    <div className={"answer-card-text"+(decreaseFontSize ? ' small-font': '')}>
+                    <div className={"answer-card-text" + (decreaseFontSize ? ' small-font' : '')}>
                         {answerText}
                     </div>
                 </div>

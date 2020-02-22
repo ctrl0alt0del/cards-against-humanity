@@ -1,6 +1,8 @@
 import React from 'react';
 import { PlayerType, GeneralPlayerType, GameType } from '../../utils/Types';
 import { ClientPlayer } from '../../utils/ClientPlayerManager';
+import { Avatars } from '../../utils/Avatars';
+import { PlayerIcon } from '../Helpers/Player';
 
 export enum DisplayPlayersInfoTypeEnum {
     Ready,
@@ -15,14 +17,15 @@ type PlayersInfoPropsType = {
 export class PlayersInfo extends React.Component<PlayersInfoPropsType> {
     render() {
         const { players, infoType } = this.props;
+        const playersToDisplay = players.filter(player => infoType !== DisplayPlayersInfoTypeEnum.Answered || player.readyFor === GameType.CardsAgainstHumanity);
         return (
             <div className="players-info-wrapper">
                 <div className="players-info-wrapper-label">
                     Гравці:
                 </div>
-                {players.map(data => {
+                {playersToDisplay.map(data => {
                     let highlight = false;
-                    if (data._id === ClientPlayer.me()._id && infoType === DisplayPlayersInfoTypeEnum.Answered) {
+                    if (data._id === ClientPlayer.me()?._id && infoType === DisplayPlayersInfoTypeEnum.Answered) {
                         return null;
                     }
                     switch (infoType) {
@@ -33,12 +36,14 @@ export class PlayersInfo extends React.Component<PlayersInfoPropsType> {
                             highlight = data.gameData.answered;
                             break;
                     }
-                    return (
-                        <div className={"player-badge-wrapper" + (highlight ? " highlighted" : '')} key={data._id}>
-                            <img src="https://dummyimage.com/100x100/999/000" className="size-helper" />
-                            <div className={"player-badge" + (highlight ? " highlighted" : '')} />
-                        </div>
-                    )
+                    let displayImageSrc = null;
+                    if (data.avatarId) {
+                        const targetAvatar = Avatars.find(avatar => avatar.id === data.avatarId);
+                        if (targetAvatar) {
+                            displayImageSrc = targetAvatar.src;
+                        }
+                    }
+                    return <PlayerIcon player={data}  highlighted={highlight}/>
                 })}
             </div>
         )

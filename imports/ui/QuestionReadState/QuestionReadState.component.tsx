@@ -7,6 +7,7 @@ import { AnswerCard } from '../AnswerCard/AnswerCard.component';
 import ReactSwipe from 'react-swipe';
 import { safeHandler } from '../../utils/Common.utils';
 import { Meteor } from "meteor/meteor";
+import { GameButton } from '../Helpers/GameButton';
 
 type QuestionReadStatePropsType = {
     questionId: string,
@@ -27,6 +28,14 @@ export class QuestionReadState extends React.Component<QuestionReadStatePropsTyp
                 console.error(err);
             }
         })
+    }
+
+    componentDidUpdate(prevProps: QuestionReadStatePropsType) {
+        const prevAnsweredAll = prevProps.answers.length === (prevProps.players.length - 1);
+        const currAnsweredAll = this.props.answers.length === (this.props.players.length - 1);
+        if(!prevAnsweredAll && currAnsweredAll) {
+            navigator.vibrate(200);
+        }
     }
 
     render() {
@@ -62,9 +71,9 @@ export class QuestionReadState extends React.Component<QuestionReadStatePropsTyp
                                                     })}
                                                 </div>
                                                 <div className="select-best-answer-button-wrapper">
-                                                    <div className="select-best-answer-button" onClick={() => this.onSelectAnswerButtonClick(playerId)}>
+                                                    <GameButton onClick={() => this.onSelectAnswerButtonClick(playerId)}>
                                                         Вибрати
-                                                    </div>
+                                                    </GameButton>
                                                 </div>
                                             </div>
                                         )
