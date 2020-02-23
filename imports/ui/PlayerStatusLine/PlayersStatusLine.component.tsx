@@ -9,6 +9,8 @@ import Modal from 'react-awesome-modal';
 import { ClientPlayer } from '../../utils/ClientPlayerManager';
 import { Meteor } from 'meteor/meteor';
 import { PlayerIcon } from '../Helpers/Player';
+import { createPortal } from 'react-dom';
+import { AddingEditor } from '../AddingEditor/AddingEditor.component';
 
 type PlayersStatusLinePropsType = {
     players: GeneralPlayerType[],
@@ -18,18 +20,21 @@ type PlayersStatusLinePropsType = {
 
 type PlayersStatusLineStateType = {
     historyModalOpened: boolean,
-    currentOptionsPlayerId: string
+    currentOptionsPlayerId: string,
+    displayAddingEditor: boolean
 }
 
 
 export class PlayersStatusLine extends React.Component<PlayersStatusLinePropsType, PlayersStatusLineStateType> {
     state: PlayersStatusLineStateType = {
         historyModalOpened: false,
-        currentOptionsPlayerId: null
+        currentOptionsPlayerId: null,
+        displayAddingEditor: false
     }
 
     private readonly openHistoryModal = () => {
         this.setState({
+            currentOptionsPlayerId: null,
             historyModalOpened: true
         })
     }
@@ -41,10 +46,6 @@ export class PlayersStatusLine extends React.Component<PlayersStatusLinePropsTyp
     }
 
     private readonly openPlayerOptionsModal = (playerId: string) => {
-        const myId = ClientPlayer.me()?._id;
-        if (playerId === myId) {
-            return;
-        }
         this.setState({
             currentOptionsPlayerId: playerId
         })
@@ -65,33 +66,33 @@ export class PlayersStatusLine extends React.Component<PlayersStatusLinePropsTyp
         })
     }
 
+    private readonly performVibroAssHacking = () => {
+        const playerId = this.state.currentOptionsPlayerId;
+        this.closePlayerOptionsModal();
+        Meteor.call("performVibroAssHacking", playerId, err => {
+            if (err) {
+                console.error(err);
+            }
+        })
+    }
+
     render() {
         const { players, turn, turns } = this.props;
-        const { historyModalOpened, currentOptionsPlayerId } = this.state;
+        const { historyModalOpened, displayAddingEditor } = this.state;
         const currentReaderId = turn?.readerId;
         const me = ClientPlayer.me();
         const otherPlayers = players.filter(player => player._id !== me?._id);
         return (
             <div id="player-status-line-wrapper">
-                <PlayerIcon player={me} height={60} className="player-icon-me"/>
-                <i className="fas fa-history history-button" onClick={this.openHistoryModal} />
+                <PlayerIcon player={me} height={60} className="player-icon-me" onClick={() => this.openPlayerOptionsModal(me?._id)} />
                 {otherPlayers.map(player => {
                     const playerId = player._id;
                     const isReader = currentReaderId === playerId;
                     return (
-                        <PlayerIcon  player={player} isReader={isReader} onClick={() => this.openPlayerOptionsModal(playerId)}/>
+                        <PlayerIcon player={player} isReader={isReader} onClick={() => this.openPlayerOptionsModal(playerId)} />
                     )
                 })}
-                <Modal visible={!!currentOptionsPlayerId} width="80%" onClickAway={this.closePlayerOptionsModal}>
-                    <div id="player-options-wrapper">
-                        <div className="player-options-item" onClick={this.onKickButtonClick}>
-                            Кікнути
-                        </div>
-                        <div className="player-options-item">
-                            Влаштувати вібровзлом жопи
-                        </div>
-                    </div>
-                </Modal>
+                {this.getCurrentOptionsForPlayerId()}
                 <GameModal active={historyModalOpened} rootClassName='history-modal-root'>
                     <div id="history-wrapper">
                         {turns.slice().reverse().map(turnData => {
@@ -136,7 +137,76 @@ export class PlayersStatusLine extends React.Component<PlayersStatusLinePropsTyp
                         </GameButton>
                     </div>
                 </GameModal>
+                <AddingEditor display={displayAddingEditor} onClose={this.closeAddingEditor} />
             </div>
         )
+    }
+
+
+    private readonly leaveGame = () => {
+        Meteor.call("leaveGame", err => {
+            if (err) {
+                console.error(err);
+            }
+        })
+    }
+
+    private readonly displayAddingEditor = () => {
+        this.setState({
+            currentOptionsPlayerId: null,
+            displayAddingEditor: true
+        })
+    }
+
+    private readonly closeAddingEditor = () => {
+        this.setState({
+            displayAddingEditor: false
+        })
+    }
+
+    private getCurrentOptionsForPlayerId() {
+        const cPId = this.state.currentOptionsPlayerId;
+        const me = ClientPlayer.me();
+        let modalContent: JSX.Element;
+        let disableFixedContainer = false;
+        if (cPId) {
+            const isMe = cPId === me?._id;
+            if (isMe) {
+                disableFixedContainer = true;
+                modalContent = (
+                    <div id="player-menu">
+                        <GameButton flat onClick={this.openHistoryModal}>
+                            <i className="fas fa-history" />
+                        </GameButton>
+                        <GameButton flat onClick={this.displayAddingEditor}>
+                            <i className="fas fa-plus"></i>
+                        </GameButton>
+                        <GameButton flat onClick={this.leaveGame}>
+                            <i className="fas fa-sign-out-alt"></i>
+                        </GameButton>
+                    </div>
+                )
+            } else {
+                modalContent = (
+                    <div id="player-options-wrapper">
+                        <GameButton flat onClick={this.onKickButtonClick}>
+                            Кікнути
+                        </GameButton>
+                        <GameButton flat onClick={this.performVibroAssHacking}>
+                            Влаштувати Взлом Жопи
+                        </GameButton>
+                    </div>
+                )
+            }
+        } else {
+            modalContent = null;
+        }
+        return createPortal((
+            <div className={disableFixedContainer ? "player-options-modal-wrapper" : ""}>
+                <Modal visible={!!cPId} width="80%" onClickAway={this.closePlayerOptionsModal} >
+                    {modalContent}
+                </Modal>
+            </div>
+        ), document.getElementById('react-target'));
     }
 }

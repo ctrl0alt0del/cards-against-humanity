@@ -7,6 +7,7 @@ import '../imports/api/Player';
 import '../imports/api/GameSession';
 import '../imports/api/CAHTurn';
 import '../imports/api/CardsAgainsHumanity';
+import '../imports/api/DirectMessages';
 
 Meteor.startup(() => {
     /*fillQuestionCollection();

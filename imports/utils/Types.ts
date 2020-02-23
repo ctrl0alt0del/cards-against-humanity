@@ -84,3 +84,7 @@ export interface VotingType<T, AddT> {
 
 export type GeneralVotingType = VotingType<any, any>;
 
+export enum DirectMessagesEnum {
+    VibroAssHacking
+}
+

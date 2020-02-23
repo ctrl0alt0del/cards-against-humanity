@@ -41,13 +41,6 @@ class CardsAgainstHumanityContentPure extends React.Component<CardsAgainstHumani
         }
     }
 
-    private readonly leaveGame = () => {
-        Meteor.call("leaveGame", err => {
-            if(err) {
-                console.error(err);
-            }
-        })
-    }
 
     render() {
         const { playUpdateScoreAnim } = this.state;
@@ -85,9 +78,6 @@ class CardsAgainstHumanityContentPure extends React.Component<CardsAgainstHumani
                             <div id="score-card-icon">{gameScore}</div>
                         </CSSTransition>
                     </div>
-                    <GameButton onClick={this.leaveGame}>
-                        Покинути гру
-                    </GameButton>
                 </div>
                 <div id="game-main-content">
                     {displayedContent}

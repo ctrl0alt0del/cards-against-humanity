@@ -2,10 +2,9 @@ import React from "react";
 import { QuestionCard } from "../QuestionCard/QuestionCard.component";
 import { ImmediateCSSTransition } from "../Helpers/ImmediateCSSTransition.component";
 import { PlayersInfo, DisplayPlayersInfoTypeEnum } from "../PlayersInfo/PlayersInfo.component";
-import { PlayerData, AnswerSelectionType, PlayerType, CAHGameData, CAHTurnAnswersData } from '../../utils/Types';
+import {  PlayerType, CAHGameData, CAHTurnAnswersData } from '../../utils/Types';
 import { AnswerCard } from '../AnswerCard/AnswerCard.component';
 import ReactSwipe from 'react-swipe';
-import { safeHandler } from '../../utils/Common.utils';
 import { Meteor } from "meteor/meteor";
 import { GameButton } from '../Helpers/GameButton';
 

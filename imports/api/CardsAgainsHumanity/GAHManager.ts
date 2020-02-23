@@ -1,17 +1,20 @@
-import { CAHGameData, PlayerType, GameType, CAHSessionGameData } from '../../utils/Types';
+import { CAHGameData, PlayerType, GameType, CAHSessionGameData, QuestionType } from '../../utils/Types';
 import { GameSessionManager } from '../GameSession/GameSession';
 import { PlayerCollection } from '../Player/PlayerCollection';
 import { MaxCardInHand } from '../../utils/Constants';
 import { AnswerCollection } from '../AnswerCollection/AnswerCollection';
-import { updateAsync, randomFind, insertAsync } from '../utils/MongoUtils';
+import { updateAsync, randomFind, insertAsync, removeAsync } from '../utils/MongoUtils';
 import { random } from 'lodash';
 import { Meteor } from 'meteor/meteor';
 import { QuestionCollection } from '../QuestionCollection/QuestionCollection';
 import { CAHTurnsCollection } from '../CAHTurn/CAHTurn.collection';
+import { factoryError, GameErrorType } from '../../utils/Errors';
 
 type CAHPlayer = PlayerType<CAHGameData>;
 
 class CardsAgainstHumanityManagerClass {
+
+    private prioritazedQuestions: QuestionType[] = [];
 
     async startGame(playersList: CAHPlayer[]) {
         const sessionId = await GameSessionManager.startNewSession(GameType.CardsAgainstHumanity, { currentTurnId: null });
@@ -113,7 +116,13 @@ class CardsAgainstHumanityManagerClass {
 
     async startNewTurn(nextReaderId: string, sessionId: string) {
         const playedQuestions = this.getAllUsedQuestionsInSession(sessionId);
-        const nextQuestion = randomFind(QuestionCollection, 1, playedQuestions).fetch()[0];
+        let nextQuestion;
+        if (this.prioritazedQuestions.length > 0) {
+            nextQuestion = this.prioritazedQuestions[0];
+            this.prioritazedQuestions = this.prioritazedQuestions.slice(1);
+        } else {
+            nextQuestion = randomFind(QuestionCollection, 1, playedQuestions).fetch()[0]
+        }
         if (nextQuestion) {
             console.log(`Starting new turn: ${nextQuestion.text}`);
             const session = GameSessionManager.getSession(sessionId);
@@ -190,7 +199,42 @@ class CardsAgainstHumanityManagerClass {
         this.incrementUserScore(answererId, 1);
         this.giveEachPlayerCards(sessionId, currTurnQuestion.answerCount, session.playersId.filter(pId => pId !== currentPlayerId));
         this.startNewTurn(answererId, sessionId);
+    }
 
+    async addNewQuestion(text: string, insertIntoQueue: boolean) {
+        const id = await insertAsync(QuestionCollection, {
+            text,
+            answerCount: (text.match(/\_/g) || []).length || 1
+        });
+        if (insertIntoQueue) {
+            const qObj = QuestionCollection.findOne({ _id: id });
+            this.prioritazedQuestions.push(qObj);
+        }
+    }
+
+    addNewAnswer(text: string) {
+        insertAsync(AnswerCollection, {
+            text
+        })
+    }
+
+    deleteAnswer(answerId: string, playerId: string) {
+        const session = GameSessionManager.getPlayerCurrentGameSession(playerId);
+        const usedList = this.getAllUsedCardInSession(session._id);
+        if (!usedList.includes(answerId)) {
+            removeAsync(AnswerCollection, { _id: answerId })
+        } else {
+            throw factoryError(GameErrorType.AnswerWasUsedInSession);
+        }
+    }
+    deleteQuestion(qId: string, playerId: string) {
+        const session = GameSessionManager.getPlayerCurrentGameSession(playerId);
+        const usedList = this.getAllUsedQuestionsInSession(session._id);
+        if (!usedList.includes(qId)) {
+            removeAsync(QuestionCollection, { _id: qId })
+        } else {
+            throw factoryError(GameErrorType.QuestionWasUsedInSession);
+        }
     }
 }
 

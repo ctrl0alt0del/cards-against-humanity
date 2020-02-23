@@ -19,6 +19,11 @@ class PlayersManagerClass {
     private updateById(id: string, modifier: Mongo.Modifier<PlayerType<GameData>>) {
         return this.updateOne({ _id: id }, modifier);
     }
+
+    getById(id: string){
+        return PlayerCollection.findOne({_id: id});
+    }
+
     removeAllOfflinePlayers() {
         return removeAsync(PlayerCollection, {});
     }

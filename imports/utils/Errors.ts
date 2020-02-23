@@ -2,7 +2,9 @@ import { Meteor } from "meteor/meteor";
 
 export enum GameErrorType {
     UnknownPlayer,
-    UnableReconnectUser
+    UnableReconnectUser,
+    QuestionWasUsedInSession,
+    AnswerWasUsedInSession
 }
 
 export function factoryError(errorType: GameErrorType) {

@@ -127,8 +127,17 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
             <div id="answer-pick-state-wrapper">
                 <div id="selected-answer-wrapper" className={selectedAnswerClass}>
                     {selectedAnswers && selectedAnswers.length > 0 ? (
-                        selectedAnswers.map(answerIndex => {
-                            return <AnswerCard disableDrag answerId={answerIndex} key={`selected_answer_${answerIndex}`} />
+                        selectedAnswers.map((answerIndex,i) => {
+                            const contStyle: any = {};
+                            const totalCount = selectedAnswers.length;
+                            if(totalCount > 1) {
+                                contStyle.left =  (75 / totalCount) * i+"%";
+                            }
+                            return (
+                                <div className="select-answer-container" style={contStyle}>
+                                    <AnswerCard disableDrag answerId={answerIndex} key={`selected_answer_${answerIndex}`} />
+                                </div>
+                            )
                         })
                     ) : (
                             <>Тягни сюди карточку, щоб вибрати відповідний варіант</>
