@@ -7,6 +7,7 @@ import { AnswerCard } from '../AnswerCard/AnswerCard.component';
 import ReactSwipe from 'react-swipe';
 import { Meteor } from "meteor/meteor";
 import { GameButton } from '../Helpers/GameButton';
+import { meteorCall } from "/imports/utils/Common.utils";
 
 type QuestionReadStatePropsType = {
     questionId: string,
@@ -22,11 +23,7 @@ const SwipeOptions = { continuous: false };
 export class QuestionReadState extends React.Component<QuestionReadStatePropsType, QuestionReadStateStateType> {
 
     onSelectAnswerButtonClick(playerId: string) {
-        Meteor.call("selectBestAnswerForCurrentQuestion", playerId, err => {
-            if(err) {
-                console.error(err);
-            }
-        })
+        return meteorCall("selectBestAnswerForCurrentQuestion", playerId)
     }
 
     componentDidUpdate(prevProps: QuestionReadStatePropsType) {

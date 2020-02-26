@@ -12,6 +12,10 @@ import { GameSessionManager } from '../GameSession/GameSession';
 class PlayersManagerClass {
     constructor() {
         //this.removeAllOfflinePlayers();
+        this.makeAllPlayersOffline();
+    }
+    private makeAllPlayersOffline(){
+        updateAsync(PlayerCollection, {}, {$set: {online:false}}, {multi: true});
     }
     private updateOne(selector: Mongo.Selector<PlayerType<GameData>>, modifier: Mongo.Modifier<PlayerType<GameData>>) {
         return updateAsync(PlayerCollection, selector, modifier, { multi: false });

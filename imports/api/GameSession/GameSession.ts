@@ -6,7 +6,7 @@ import { PlayersManager } from '../Player/Player';
 
 class GameSessionManagerClass {
     constructor() {
-        //this.removeSessions();
+        this.removeSessions();
     }
     updateSessionById(sessionId: string, modifier: Mongo.Modifier<GeneralGameSessionType>) {
         return updateAsync(GameSessionCollection, { _id: sessionId }, modifier, { multi: false });
@@ -60,16 +60,18 @@ class GameSessionManagerClass {
         if (!session) {
             session = GameSessionCollection.findOne({ _id: sessionId });
         }
-        const players = session.playersId;
+        const playersIdList = session.playersId;
         const sessionSelector = { _id: session._id };
         PlayersManager.makePlayerReadyFor(playerId, GameType.None);
-        if (players.length === 1 && players[0] === playerId) {//i.e only this user
+        const playersOnlineList = playersIdList.map(pId => PlayersManager.getById(pId));
+
+        if (playersOnlineList.length === 1 && playersOnlineList[0]._id === playerId) {//i.e only this user
             return removeAsync(GameSessionCollection, sessionSelector);
         } else {
             const disabledPlayersId = session.disabledPlayersId || [];
             return updateAsync(GameSessionCollection, sessionSelector, {
                 $set: {
-                    playersId: players.filter(pId => pId !== playerId),
+                    playersId: playersIdList.filter(pId => pId !== playerId),
                     disabledPlayersId: denyAccess ? disabledPlayersId.concat(playerId) : disabledPlayersId
                 }
             }, { multi: false })

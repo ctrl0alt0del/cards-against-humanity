@@ -1,3 +1,5 @@
+@lgbt-grad: linear-gradient(rgb(255, 0, 24) 0%, rgb(255, 0, 24) 16.6667%, rgb(255, 165, 44) 16.6667%, rgb(255, 165, 44) 33.3333%, rgb(255, 255, 65) 33.3333%, rgb(255, 255, 65) 50%, rgb(0, 128, 24) 50%, rgb(0, 128, 24) 66.6667%, rgb(0, 0, 249) 66.6667%, rgb(0, 0, 249) 83.3333%, rgb(134, 0, 125) 83.3333%, rgb(134, 0, 125) 100%);
+
 #app {
     height: 100%;
     width: 100%;
@@ -7,9 +9,26 @@
     align-items: stretch;
     
 }
+
 #react-target{
     
     background-color: #efefef;
+    &.lgbt {
+        background: @lgbt-grad;
+        .select-answer-explain{
+            color:black;    
+        }
+        #history-wrapper, #adding-editor-wrapper {
+            background: @lgbt-grad;
+        }
+        .entity-edit-list-item{
+            padding: 16px 12px;
+            background-color: #ffffffec;
+        }
+        .players-info-wrapper-label {
+            color: white;
+        }
+    }
 }
 
 #quick-alert-wrapper {

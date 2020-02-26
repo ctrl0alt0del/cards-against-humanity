@@ -131,21 +131,18 @@ class CardsAgainstHumanityManagerClass {
                     'gameData.answered': false
                 }
             }, { multi: true });
-            Meteor.setTimeout(async () => {
-                const nextTurnObj = {
-                    readerId: nextReaderId,
-                    questionId: nextQuestion._id,
-                    answers: [],
-                    sessionId: sessionId
+            const nextTurnObj = {
+                readerId: nextReaderId,
+                questionId: nextQuestion._id,
+                answers: [],
+                sessionId: sessionId
+            }
+            const turnId = await insertAsync(CAHTurnsCollection, nextTurnObj);
+            GameSessionManager.updateSessionById(sessionId, {
+                $set: {
+                    'sessionGameData.currentTurnId': turnId
                 }
-                const turnId = await insertAsync(CAHTurnsCollection, nextTurnObj);
-                console.log(turnId);
-                GameSessionManager.updateSessionById(sessionId, {
-                    $set: {
-                        'sessionGameData.currentTurnId': turnId
-                    }
-                })
-            }, 1000)
+            })
         }
     }
 
@@ -185,6 +182,10 @@ class CardsAgainstHumanityManagerClass {
         const session = GameSessionManager.getPlayerCurrentGameSession(currentPlayerId);
         const sessionId = session._id;
         const currentTurn = this.getCurrentTurnData(sessionId);
+        if (currentTurn.answers.some(answerdata => answerdata.isWinner)) {
+            console.warn('answers were already accepted')
+            return; //answers were already accepted
+        }
         currentTurn.answers.forEach(answ => {
             if (answ.playerId === answererId) {
                 answ.isWinner = true;

@@ -15,6 +15,20 @@
     align-items     : center;
 }
 
+.game-button, .flat-game-button {
+    &.pending {
+        i {
+            animation: rotate-anim .7s ease-in-out infinite;
+        }
+    }
+}
+
+@keyframes rotate-anim {
+    from {
+        transform: rotate(360deg);
+    }
+}
+
 .flat-game-button {
 
     min-height : 30px;
@@ -69,6 +83,10 @@
         &.highlighted {
             border    : 2px solid green;
             box-shadow: 0px 0px 5px 2px #003f0099;
+        }
+        &.offline {
+            border: 2px solid red;
+            box-shadow: 0px 0px 5px 2px #3f000099;
         }
 
         .player-status-item-image {

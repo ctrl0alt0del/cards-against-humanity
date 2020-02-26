@@ -8,6 +8,7 @@ import { getQuestionById } from '/imports/utils/GameData.utils';
 import { GameButton } from '../Helpers/GameButton';
 import { CAHTurnType } from '../../utils/Types';
 import { ClientPlayer } from '../../utils/ClientPlayerManager';
+import { meteorCall } from '/imports/utils/Common.utils';
 
 type AnswerListPropsType = {
     answers: string[],
@@ -33,6 +34,16 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
     componentDidUpdate(prevProps: AnswerListPropsType) {
         if (this.props.currentQuestionId && prevProps.currentQuestionId !== this.props.currentQuestionId) {
             this.resolveMaxAnswersForCurrentQuestion();
+        }
+        const currentTurn = this.props.turn;
+        const prevTurn = prevProps.turn;
+        const myId = ClientPlayer.myId();
+        const currMyAnswers = currentTurn?.answers.find(answerData => answerData.playerId === myId);
+        const prevMyAnswers = prevTurn?.answers.find(answerData => answerData.playerId === myId);
+        if ((currMyAnswers && !prevMyAnswers)) {
+            this.setState({
+                selectedAnswers: currMyAnswers.answersIdList
+            })
         }
     }
 
@@ -93,14 +104,11 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
     }
 
     onAcceptAnswerButtonClick = () => {
-        Meteor.call("selectAnswersForCurrentQuestion", this.state.selectedAnswers, err => {
-            if (err) {
-                console.error(err);
-            }
-        })
         this.setState({
             answerWasAccepted: true
         })
+        return meteorCall("selectAnswersForCurrentQuestion", this.state.selectedAnswers)
+
     }
 
     onAnswerSelected(answerId: string) {
@@ -127,11 +135,11 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
             <div id="answer-pick-state-wrapper">
                 <div id="selected-answer-wrapper" className={selectedAnswerClass}>
                     {selectedAnswers && selectedAnswers.length > 0 ? (
-                        selectedAnswers.map((answerIndex,i) => {
+                        selectedAnswers.map((answerIndex, i) => {
                             const contStyle: any = {};
                             const totalCount = selectedAnswers.length;
-                            if(totalCount > 1) {
-                                contStyle.left =  (75 / totalCount) * i+"%";
+                            if (totalCount > 1) {
+                                contStyle.left = (75 / totalCount) * i + "%";
                             }
                             return (
                                 <div className="select-answer-container" style={contStyle}>
@@ -140,7 +148,7 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
                             )
                         })
                     ) : (
-                            <>Тягни сюди карточку, щоб вибрати відповідний варіант</>
+                            <span className="select-answer-explain">Тягни сюди карточку, щоб вибрати відповідний варіант</span>
                         )}
                 </div>
                 <div id="select-answer-control-buttons">

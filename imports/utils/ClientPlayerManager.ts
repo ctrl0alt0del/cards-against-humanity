@@ -7,6 +7,9 @@ class ClientPlayerClass {
         const connId = localStorage.getItem('connectionId');
         return PlayerCollection.findOne({ connectionId: connId });
     }
+    myId(){
+        return this.me()?._id;
+    }
 }
 
 export const ClientPlayer = new ClientPlayerClass();
