@@ -8,8 +8,8 @@ Meteor.methods({
         return AnswerCollection.findOne({ _id: answerId });
     },
 
-    addNewAnswer(text: string) {
-        return CAHManager.addNewAnswer(text);
+    addNewAnswer(text: string, isJoker = false) {
+        return CAHManager.addNewAnswer(text, isJoker);
     },
 
     deleteAnswer(id: string) {
@@ -18,5 +18,9 @@ Meteor.methods({
 
     fetchAllAnswers() {
         return AnswerCollection.find().fetch();
+    },
+
+    likeJokerCard(cardId: string) {
+        CAHManager.likeJockerCard(cardId);
     }
 })

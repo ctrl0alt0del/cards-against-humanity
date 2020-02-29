@@ -12,6 +12,18 @@ export async function meteorCall<T>(methodName: string, ...args) {
     })
 }
 
+export function playAudio(fileSrc: string) {
+    return new Audio(fileSrc).play();
+}
+
+export function vibrate(msTime: number) {
+    if(navigator.vibrate){
+        navigator.vibrate(msTime);
+    } else {
+        playAudio('/noVIbrate.mp3');
+    }
+}
+
 export const safeHandler = (cb) => {
     return (...args) => cb && cb(...args);
 }
@@ -22,6 +34,9 @@ export const EntityFetcher = <In, Out>(fn: (id: In) => Promise<Out>) => {
         if(cacheMap.has(id)) {
             return Promise.resolve(cacheMap.get(id));
         }
-        return fn(id);
+        return fn(id).then(res => {
+            cacheMap.set(id, res);
+            return res;
+        });
     }
 }

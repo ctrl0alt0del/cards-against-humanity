@@ -11,11 +11,11 @@ import { GameSessionManager } from '../GameSession/GameSession';
 
 class PlayersManagerClass {
     constructor() {
-        //this.removeAllOfflinePlayers();
+        this.removeAllOfflinePlayers();
         this.makeAllPlayersOffline();
     }
     private makeAllPlayersOffline(){
-        updateAsync(PlayerCollection, {}, {$set: {online:false}}, {multi: true});
+        updateAsync(PlayerCollection, {}, {$set: {online:false, readyFor: GameType.None}}, {multi: true});
     }
     private updateOne(selector: Mongo.Selector<PlayerType<GameData>>, modifier: Mongo.Modifier<PlayerType<GameData>>) {
         return updateAsync(PlayerCollection, selector, modifier, { multi: false });
@@ -29,7 +29,7 @@ class PlayersManagerClass {
     }
 
     removeAllOfflinePlayers() {
-        return removeAsync(PlayerCollection, {});
+        return removeAsync(PlayerCollection, {online: false});
     }
     findPlayerByConnectionId(conId: string) {
         return PlayerCollection.findOne({ connectionId: conId });

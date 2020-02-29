@@ -1,6 +1,6 @@
 import React from 'react';
 import { withTracker } from "meteor/react-meteor-data";
-import { GameType, GeneralGameSessionType, GeneralPlayerType, GeneralVotingType, DirectMessagesEnum } from '../utils/Types';
+import { GameType, GeneralGameSessionType, GeneralPlayerType, DirectMessagesEnum } from '../utils/Types';
 import { Meteor } from 'meteor/meteor';
 import { ClientPlayer } from '../utils/ClientPlayerManager';
 import { PlayerCollection } from '../api/Player/PlayerCollection';
@@ -12,6 +12,7 @@ import { VotingDialog } from './VotingDialog/VotingDialog.component';
 import { performAssHack } from '../utils/TrashUtils';
 import Modal from 'react-awesome-modal';
 import { GameButton } from './Helpers/GameButton';
+import { GeneralVotingType } from '../utils/VotingTypes';
 
 type AppPropsType = {
     players: GeneralPlayerType[],
@@ -58,7 +59,7 @@ class App extends React.Component<AppPropsType, AppStateType> {
         Streamy.on('message', data => {
             const { type } = data;
             switch (type) {
-                case DirectMessagesEnum.VibroAssHacking:
+                case DirectMessagesEnum.AssHack:
                     this.quickAlert('Увага! Дуже важливе повідомлення, яке стосується гри "Чорне по білому". Нажміть "Добре", щоб відкрити повідомлення!', () => performAssHack());
                     return;
             }

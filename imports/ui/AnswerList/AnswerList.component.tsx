@@ -1,14 +1,15 @@
 import React from 'react';
 import { AnswerCard } from '../AnswerCard/AnswerCard.component';
-import { TransitionGroup, CSSTransition } from "react-transition-group"
-import Draggable, { DraggableEvent } from 'react-draggable';
+import { TransitionGroup } from "react-transition-group"
+import { DraggableEvent } from 'react-draggable';
 import { ImmediateCSSTransition } from '../Helpers/ImmediateCSSTransition.component';
-import { Meteor } from 'meteor/meteor';
 import { getQuestionById } from '/imports/utils/GameData.utils';
 import { GameButton } from '../Helpers/GameButton';
 import { CAHTurnType } from '../../utils/Types';
 import { ClientPlayer } from '../../utils/ClientPlayerManager';
 import { meteorCall } from '/imports/utils/Common.utils';
+import { JOCKER_ANSWER_ID } from '/imports/utils/Constants';
+import Modal from 'react-awesome-modal';
 
 type AnswerListPropsType = {
     answers: string[],
@@ -20,7 +21,10 @@ type AnswerListStateType = {
     dropableAreaHighlighted: boolean,
     answerWasAccepted: boolean,
     selectedAnswers: string[],
-    maxAnswersCount: number
+    maxAnswersCount: number,
+    openAnswerCreateDialog: boolean,
+    jokerWasUsed: boolean,
+    newAnswerText: string
 }
 
 export class AnswerList extends React.Component<AnswerListPropsType, AnswerListStateType> {
@@ -28,7 +32,10 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
         dropableAreaHighlighted: false,
         answerWasAccepted: false,
         selectedAnswers: [],
-        maxAnswersCount: 1
+        maxAnswersCount: 1,
+        jokerWasUsed: false,
+        openAnswerCreateDialog: false,
+        newAnswerText: ''
     }
 
     componentDidUpdate(prevProps: AnswerListPropsType) {
@@ -51,7 +58,9 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
         const currQId = this.props.currentQuestionId;
         this.setState({
             selectedAnswers: [],
-            answerWasAccepted: false
+            answerWasAccepted: false,
+            jokerWasUsed: false,
+            openAnswerCreateDialog: false
         })
         const qData = await getQuestionById(currQId);
         if (qData) {
@@ -99,7 +108,8 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
 
     onResetAnswerListButtonClick = () => {
         this.setState({
-            selectedAnswers: []
+            selectedAnswers: [],
+            jokerWasUsed: false
         })
     }
 
@@ -112,10 +122,17 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
     }
 
     onAnswerSelected(answerId: string) {
-        const prevSelectedAnswers = this.state.selectedAnswers;
-        this.setState({
-            selectedAnswers: prevSelectedAnswers.concat(answerId)
-        })
+        if (answerId === JOCKER_ANSWER_ID) {
+            this.setState({
+                jokerWasUsed: true,
+                openAnswerCreateDialog: true
+            })
+        } else {
+            const prevSelectedAnswers = this.state.selectedAnswers;
+            this.setState({
+                selectedAnswers: prevSelectedAnswers.concat(answerId)
+            })
+        }
     }
 
     private isElementOverSelectableArea(draggableEl: HTMLElement) {
@@ -125,12 +142,48 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
         return isDraggedOverArea;
     }
 
+    private readonly closeNewAnswerDialog = (saved = false) => {
+        this.setState({
+            openAnswerCreateDialog: false,
+            newAnswerText: '',
+            jokerWasUsed: !saved
+        })
+    }
+
+    private readonly onNewAnswerTextareaChange = event => {
+        const value = event.currentTarget.value;
+        this.setState({
+            newAnswerText: value
+        })
+    }
+
+    private onSaveNewAnswerClick = async () => {
+        const answerText = this.state.newAnswerText;
+        const newAnswerId = await meteorCall<string>("addNewAnswer", answerText, true);
+        this.setState({
+            selectedAnswers: [newAnswerId],
+            openAnswerCreateDialog: false,
+            jokerWasUsed: true
+        });
+
+    }
+
     render() {
         const { answers, turn } = this.props;
         const me = ClientPlayer.me();
-        const { dropableAreaHighlighted, answerWasAccepted, selectedAnswers, maxAnswersCount } = this.state;
+        const {
+            dropableAreaHighlighted,
+            answerWasAccepted,
+            selectedAnswers,
+            maxAnswersCount,
+            openAnswerCreateDialog,
+            jokerWasUsed,
+            newAnswerText
+        } = this.state;
         const selectedAnswerClass = selectedAnswers && selectedAnswers.length === maxAnswersCount ? 'selected' : (dropableAreaHighlighted ? 'highlighted' : '');
         const myAnswerInTurn = turn?.answers.some(answerData => answerData.playerId === me?._id) || false;
+        const jokerAvailable = me?.gameData?.jokersCount > 0;
+        const answersToList = answers.filter(answer => !selectedAnswers.includes(answer));
         return (
             <div id="answer-pick-state-wrapper">
                 <div id="selected-answer-wrapper" className={selectedAnswerClass}>
@@ -164,10 +217,7 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
                     )}
                 </div>
                 <TransitionGroup component="div" id="answer-pick-state-cards-list">
-                    {answers.map((answerId) => {
-                        if (selectedAnswers.includes(answerId)) {
-                            return;
-                        }
+                    {answersToList.map((answerId) => {
                         return (
                             <ImmediateCSSTransition key={`answer_${answerId}`} classNames="game-card-anim" timeout={200}>
                                 <div className="answer-card-super-wrapper">
@@ -175,12 +225,41 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
                                         answerId={answerId}
                                         onDrag={this.onDragAnswerHandler}
                                         onDrop={(ev) => this.onDropAnswerHandler(answerId, ev)}
+                                        aspectRatio={answersToList.length + (jokerAvailable ? 1 : 0) > 6 ? .2 : .25}
                                     />
                                 </div>
                             </ImmediateCSSTransition>
                         )
                     })}
+                    {
+                        jokerAvailable && !jokerWasUsed && (
+
+                            <ImmediateCSSTransition key={`answer_joker`} classNames="game-card-anim" timeout={200}>
+                                <div className="answer-card-super-wrapper">
+                                    <AnswerCard
+                                        answerId={JOCKER_ANSWER_ID}
+                                        onDrag={this.onDragAnswerHandler}
+                                        onDrop={(ev) => this.onDropAnswerHandler(JOCKER_ANSWER_ID, ev)}
+                                        aspectRatio={.2}
+                                    />
+                                </div>
+                            </ImmediateCSSTransition>
+                        )
+                    }
                 </TransitionGroup>
+                <Modal visible={openAnswerCreateDialog} onClickAway={this.closeNewAnswerDialog}>
+                    <div id="runtime-create-new-answer-wrapper">
+                        Добавте свій варіант відповіді на запитання. Якщо цей варіант виграє або його відмітять, то він буде доступний далі в грі.
+                        <textarea
+                            value={newAnswerText}
+                            onChange={this.onNewAnswerTextareaChange}
+                        />
+
+                        <GameButton onClick={this.onSaveNewAnswerClick}>
+                            Добавити
+                        </GameButton>
+                    </div>
+                </Modal>
             </div>
         )
     }

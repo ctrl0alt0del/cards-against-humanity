@@ -1,7 +1,7 @@
 import React from 'react';
-import { GeneralVotingType, VotingReasonType, VotingType, KickPlayerVotingType, GeneralPlayerType } from '../../utils/Types';
+import {  GeneralPlayerType } from '../../utils/Types';
+import { VotingReasonType, KickPlayerVotingType, GeneralVotingType } from '../../utils/VotingTypes';
 import Modal from 'react-awesome-modal';
-import { getAvatarSrc } from '../../utils/Avatars';
 import { GameButton } from '../Helpers/GameButton';
 import { Meteor } from 'meteor/meteor';
 import { PlayerIcon } from '../Helpers/Player';

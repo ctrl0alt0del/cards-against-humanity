@@ -1,3 +1,4 @@
+
 export type QuestionType = {
     _id: string,
     text: string;
@@ -5,7 +6,8 @@ export type QuestionType = {
 };
 export type AnswerType = {
     _id: string,
-    text: string;
+    text: string,
+    isJoker: boolean
 };
 
 export type CAHTurnAnswersData = {
@@ -47,7 +49,8 @@ export type CAHGameData = {
     type: GameType.CardsAgainstHumanity
     cardsOnHand: string[],
     score: number,
-    answered: boolean
+    answered: boolean,
+    jokersCount: number
 }
 
 export type GameData = CAHGameData;
@@ -63,28 +66,8 @@ export type PlayerType<T> = {
 
 export type GeneralPlayerType = PlayerType<GameData>;
 
-export enum VotingReasonType {
-    KickPlayer
-}
-
-export type KickPlayerVotingType = VotingType<boolean, {playerId: string}>
-
-export interface VotingType<T, AddT> {
-    _id: string,
-    reason: VotingReasonType,
-    additionalData: AddT,
-    unavailableFor?: string[],
-    active: boolean,
-    sessionId: string,
-    votingData: {
-        votedBy: string,
-        selectedChoice: T
-    }[]
-}
-
-export type GeneralVotingType = VotingType<any, any>;
 
 export enum DirectMessagesEnum {
-    VibroAssHacking
+    AssHack
 }
 

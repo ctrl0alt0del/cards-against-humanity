@@ -2,12 +2,12 @@ import React from "react";
 import { QuestionCard } from "../QuestionCard/QuestionCard.component";
 import { ImmediateCSSTransition } from "../Helpers/ImmediateCSSTransition.component";
 import { PlayersInfo, DisplayPlayersInfoTypeEnum } from "../PlayersInfo/PlayersInfo.component";
-import {  PlayerType, CAHGameData, CAHTurnAnswersData } from '../../utils/Types';
+import { PlayerType, CAHGameData, CAHTurnAnswersData } from '../../utils/Types';
 import { AnswerCard } from '../AnswerCard/AnswerCard.component';
 import ReactSwipe from 'react-swipe';
 import { Meteor } from "meteor/meteor";
 import { GameButton } from '../Helpers/GameButton';
-import { meteorCall } from "/imports/utils/Common.utils";
+import { meteorCall, vibrate } from "/imports/utils/Common.utils";
 
 type QuestionReadStatePropsType = {
     questionId: string,
@@ -22,15 +22,24 @@ const SwipeOptions = { continuous: false };
 
 export class QuestionReadState extends React.Component<QuestionReadStatePropsType, QuestionReadStateStateType> {
 
+    private preventMultipleClickOnSelectButton = false;
+
     onSelectAnswerButtonClick(playerId: string) {
+        if(this.preventMultipleClickOnSelectButton) {
+            return;
+        }
+        this.preventMultipleClickOnSelectButton = true;
+        setTimeout(()=>{
+            this.preventMultipleClickOnSelectButton = false;
+        }, 2000)
         return meteorCall("selectBestAnswerForCurrentQuestion", playerId)
     }
 
     componentDidUpdate(prevProps: QuestionReadStatePropsType) {
         const prevAnsweredAll = prevProps.answers.length === (prevProps.players.length - 1);
         const currAnsweredAll = this.props.answers.length === (this.props.players.length - 1);
-        if(!prevAnsweredAll && currAnsweredAll) {
-            navigator.vibrate(200);
+        if (!prevAnsweredAll && currAnsweredAll) {
+            vibrate(200);
         }
     }
 
@@ -59,12 +68,16 @@ export class QuestionReadState extends React.Component<QuestionReadStatePropsTyp
                                             <div className="answer-for-question-wrapper" key={`answer_${playerId}`}>
                                                 <div className="answers-inline-wrapper">
                                                     {answersData.answersIdList.map(answerId => {
-                                                        return (<AnswerCard
-                                                            answerId={answerId}
-                                                            disableDrag
-                                                            key={`answer_${answerId}`}
-                                                        />)
+                                                        return (
+                                                            <AnswerCard
+                                                                answerId={answerId}
+                                                                disableDrag
+                                                                key={`answer_${answerId}`}
+                                                                canLikeJocker
+                                                            />
+                                                        )
                                                     })}
+                                                    
                                                 </div>
                                                 <div className="select-best-answer-button-wrapper">
                                                     <GameButton onClick={() => this.onSelectAnswerButtonClick(playerId)}>

@@ -9,6 +9,7 @@ import { Meteor } from 'meteor/meteor';
 import { CAHTurnsCollection } from '/imports/api/CAHTurn/CAHTurn.collection';
 import { PlayersStatusLine } from '../PlayerStatusLine/PlayersStatusLine.component';
 import { GameButton } from '../Helpers/GameButton';
+import { vibrate } from '/imports/utils/Common.utils';
 
 type CardsAgainstHumanityContentPropsType = {
     player: PlayerType<CAHGameData>,
@@ -34,7 +35,7 @@ class CardsAgainstHumanityContentPure extends React.Component<CardsAgainstHumani
         const prevScore = prevProps.player?.gameData?.score || 0;
         const currScore = this.props.player?.gameData?.score || 0;
         if (prevScore !== currScore) {
-            navigator.vibrate(200);
+            vibrate(200);
             this.setState({
                 playUpdateScoreAnim: true
             })
@@ -47,6 +48,7 @@ class CardsAgainstHumanityContentPure extends React.Component<CardsAgainstHumani
         const { player, session, players, turns } = this.props;
         const cards = player?.gameData?.cardsOnHand || [];
         const gameScore = player?.gameData?.score || 0;
+        const jokersCount = player?.gameData?.jokersCount || 0;
         const currentTurnId = session?.sessionGameData.currentTurnId || null;
         const currentTurnData = turns && turns.find(t => t._id === currentTurnId);
         const isCurrentPlayerReader = currentTurnData && player ? currentTurnData.readerId === player?._id : false;
@@ -77,11 +79,15 @@ class CardsAgainstHumanityContentPure extends React.Component<CardsAgainstHumani
                         <CSSTransition in={playUpdateScoreAnim} classNames="score-update" timeout={300}>
                             <div id="score-card-icon">{gameScore}</div>
                         </CSSTransition>
+                        <div id="joker-count-wrapper">
+                            <i className="fas fa-mask"/>
+                            x{jokersCount}
+                        </div>
                     </div>
                 </div>
                 <div id="game-main-content">
                     {displayedContent}
-                    <PlayersStatusLine players={players} turn={currentTurnData} turns={turns}/>
+                    <PlayersStatusLine players={players} turn={currentTurnData} turns={turns} />
                 </div>
             </React.Fragment>
         );

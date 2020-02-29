@@ -1,4 +1,4 @@
-import { VotingReasonType, GeneralVotingType, KickPlayerVotingType } from '../../utils/Types';
+import { VotingReasonType, KickPlayerVotingType, GeneralVotingType } from '../../utils/VotingTypes';
 import { insertAsync, updateAsync, removeAsync } from '../utils/MongoUtils';
 import { VotingCollection } from './Voting.collection';
 import { GameSessionManager } from '../GameSession/GameSession';

@@ -1,7 +1,7 @@
 import { CAHGameData, PlayerType, GameType, CAHSessionGameData, QuestionType } from '../../utils/Types';
 import { GameSessionManager } from '../GameSession/GameSession';
 import { PlayerCollection } from '../Player/PlayerCollection';
-import { MaxCardInHand } from '../../utils/Constants';
+import { MAX_CARDS_IN_HAND, JOKER_CHANCE } from '../../utils/Constants';
 import { AnswerCollection } from '../AnswerCollection/AnswerCollection';
 import { updateAsync, randomFind, insertAsync, removeAsync } from '../utils/MongoUtils';
 import { random } from 'lodash';
@@ -9,6 +9,7 @@ import { Meteor } from 'meteor/meteor';
 import { QuestionCollection } from '../QuestionCollection/QuestionCollection';
 import { CAHTurnsCollection } from '../CAHTurn/CAHTurn.collection';
 import { factoryError, GameErrorType } from '../../utils/Errors';
+import { PlayersManager } from '../Player/Player';
 
 type CAHPlayer = PlayerType<CAHGameData>;
 
@@ -32,7 +33,8 @@ class CardsAgainstHumanityManagerClass {
                     answered: false,
                     cardsOnHand: [],
                     score: 0,
-                    type: GameType.CardsAgainstHumanity
+                    type: GameType.CardsAgainstHumanity,
+                    jokersCount: 1
                 }
             }
         }, { multi: false })
@@ -40,7 +42,7 @@ class CardsAgainstHumanityManagerClass {
 
     async connectPlayersToSession(playerIdList: string[], sessionId: string) {
         const targetSession = GameSessionManager.getSession(sessionId, GameType.CardsAgainstHumanity);
-        let cardPool = this.getAnswerCardPool(playerIdList.length * MaxCardInHand, sessionId);
+        let cardPool = this.getAnswerCardPool(playerIdList.length * MAX_CARDS_IN_HAND, sessionId);
         for (const playerId of playerIdList) {
             if (!targetSession.playersId.includes(playerId)) {
                 await GameSessionManager.addPlayerToSession(sessionId, playerId);
@@ -58,11 +60,15 @@ class CardsAgainstHumanityManagerClass {
         if (!playerIdList) {
             playerIdList = targetSession.playersId;
         }
-        let cardPool = this.getAnswerCardPool(playerIdList.length * MaxCardInHand, sessionId);
-        for (const playerId of playerIdList) {
-            let cardsToDraw = cardPool.slice(0, count);
+        const playerList = playerIdList.map(playerId => PlayersManager.getById(playerId));
+        let cardPool = this.getAnswerCardPool(playerIdList.length * MAX_CARDS_IN_HAND, sessionId);
+        for (const player of playerList) {
+            const playerId = player._id;
+            const currentCountOfCardsOnHand = player.gameData.cardsOnHand.length
+            const countToDraw = currentCountOfCardsOnHand + count > MAX_CARDS_IN_HAND ? MAX_CARDS_IN_HAND - currentCountOfCardsOnHand : count;
+            let cardsToDraw = cardPool.slice(0, countToDraw);
             cardPool = cardPool.slice(count);
-            this.giveCardsToPlayer(playerId, cardsToDraw.map(card => card._id), 200)
+            this.giveCardsToPlayer(playerId, cardsToDraw.map(card => card._id), 200);
         }
     }
 
@@ -124,6 +130,7 @@ class CardsAgainstHumanityManagerClass {
             nextQuestion = randomFind(QuestionCollection, 1, playedQuestions).fetch()[0]
         }
         if (nextQuestion) {
+            removeAsync(AnswerCollection, {isJoker: true}); //clean all joker cards
             console.log(`Starting new turn: ${nextQuestion.text}`);
             const session = GameSessionManager.getSession(sessionId);
             updateAsync(PlayerCollection, { _id: { $in: session.playersId } }, {
@@ -155,6 +162,7 @@ class CardsAgainstHumanityManagerClass {
     async acceptAnswersForCurrentQuestion(playerId: string, answersIds: string[]) {
         const playerSession = GameSessionManager.getPlayerCurrentGameSession(playerId);
         const currentTurn = this.getCurrentTurnData(playerSession._id);
+        const someAnswerIsJocker = answersIds.some(answerId => AnswerCollection.findOne({_id: answerId})?.isJoker);
         await updateAsync(CAHTurnsCollection, { _id: currentTurn._id }, {
             $push: {
                 answers: {
@@ -170,6 +178,9 @@ class CardsAgainstHumanityManagerClass {
             },
             $set: {
                 'gameData.answered': true
+            },
+            $inc: {
+                'gameData.jokersCount': someAnswerIsJocker ? -1 : 0
             }
         }, { multi: false });
     }
@@ -178,7 +189,7 @@ class CardsAgainstHumanityManagerClass {
         updateAsync(PlayerCollection, { _id: playerId }, { $inc: { 'gameData.score': value } }, { multi: false });
     }
 
-    selectBestAnswerForCurrentTurn(currentPlayerId: string, answererId: string) {
+    async selectBestAnswerForCurrentTurn(currentPlayerId: string, answererId: string) {
         const session = GameSessionManager.getPlayerCurrentGameSession(currentPlayerId);
         const sessionId = session._id;
         const currentTurn = this.getCurrentTurnData(sessionId);
@@ -186,20 +197,26 @@ class CardsAgainstHumanityManagerClass {
             console.warn('answers were already accepted')
             return; //answers were already accepted
         }
+        let answersWhichWon = [];
         currentTurn.answers.forEach(answ => {
             if (answ.playerId === answererId) {
                 answ.isWinner = true;
+                answersWhichWon = answ.answersIdList;
             }
         });
-        updateAsync(CAHTurnsCollection, { _id: currentTurn._id }, {
+        await updateAsync(CAHTurnsCollection, { _id: currentTurn._id }, {
             $set: {
                 answers: currentTurn.answers
             }
         }, { multi: false });
+        await updateAsync(AnswerCollection, {_id: {$in: answersWhichWon}}, {$set: {isJoker: false}}, {multi: true}); //make winning cards non-joker to prevent deletion on new turn
         const currTurnQuestion = QuestionCollection.findOne({ _id: currentTurn.questionId });
         this.incrementUserScore(answererId, 1);
         this.giveEachPlayerCards(sessionId, currTurnQuestion.answerCount, session.playersId.filter(pId => pId !== currentPlayerId));
         this.startNewTurn(answererId, sessionId);
+        for (const playerId of session.playersId) {
+            this.resolveJokerForPlayer(playerId);
+        }
     }
 
     async addNewQuestion(text: string, insertIntoQueue: boolean) {
@@ -213,9 +230,10 @@ class CardsAgainstHumanityManagerClass {
         }
     }
 
-    addNewAnswer(text: string) {
-        insertAsync(AnswerCollection, {
-            text
+    addNewAnswer(text: string, isJoker = false) {
+        return insertAsync(AnswerCollection, {
+            text,
+            isJoker
         })
     }
 
@@ -236,6 +254,22 @@ class CardsAgainstHumanityManagerClass {
         } else {
             throw factoryError(GameErrorType.QuestionWasUsedInSession);
         }
+    }
+
+    resolveJokerForPlayer(playerId: string) {
+        const randomNumber = Math.random();
+        const giveJoker = randomNumber > (1 - JOKER_CHANCE);
+        if (giveJoker) {
+            this.incrementJokersCountForPlayer(playerId, 1);
+        }
+    }
+
+    private incrementJokersCountForPlayer(playerId: string, byCount: number) {
+        updateAsync(PlayerCollection, { _id: playerId }, { $inc: { 'gameData.jokersCount': byCount } }, { multi: false });
+    }
+
+    likeJockerCard(cardId: string) {
+        updateAsync(AnswerCollection, { _id: cardId }, { $set: { isJoker: false } }, { multi: false })
     }
 }
 
