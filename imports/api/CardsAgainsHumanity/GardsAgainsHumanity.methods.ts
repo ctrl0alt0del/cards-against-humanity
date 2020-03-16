@@ -10,5 +10,8 @@ Meteor.methods({
     selectBestAnswerForCurrentQuestion(answererId: string) {
         const playerId = PlayersManager.getPlayerId(this);
         CAHManager.selectBestAnswerForCurrentTurn(playerId, answererId);
+    },
+    switchToNextQuestion() {
+        return CAHManager.switchToNextQuestion(PlayersManager.getPlayerId(this));
     }
 })

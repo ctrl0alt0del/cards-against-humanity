@@ -20,9 +20,6 @@ export class PlayersInfo extends React.Component<PlayersInfoPropsType> {
         const playersToDisplay = players.filter(player => infoType !== DisplayPlayersInfoTypeEnum.Answered || player.readyFor === GameType.CardsAgainstHumanity);
         return (
             <div className="players-info-wrapper">
-                <div className="players-info-wrapper-label">
-                    Гравці:
-                </div>
                 {playersToDisplay.map(data => {
                     let highlight = false;
                     if (data._id === ClientPlayer.me()?._id && infoType === DisplayPlayersInfoTypeEnum.Answered) {

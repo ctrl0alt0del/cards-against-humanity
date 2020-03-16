@@ -4,6 +4,7 @@ import { GameButton } from '../Helpers/GameButton';
 import { safeHandler, meteorCall } from '../../utils/Common.utils';
 import { Meteor } from 'meteor/meteor';
 import { QuestionType, AnswerType } from '../../utils/Types';
+import { AddNewQuestionType } from '/imports/utils/Constants';
 
 export enum EditingEnitityType {
     Question,
@@ -71,7 +72,7 @@ export class AddingEditor extends React.Component<AddingEditorPropsType, AddingE
             this.props.onClose();
         }
         if (type === EditingEnitityType.Question) {
-            Meteor.call("addNewQuestion", text, insertInQueue, err => {
+            Meteor.call("addNewQuestion", text, insertInQueue ? AddNewQuestionType.NextQuestion : AddNewQuestionType.None, err => {
                 if (err) {
                     console.error(err);
                 } else {

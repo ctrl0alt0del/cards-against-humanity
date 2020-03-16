@@ -61,6 +61,8 @@ class CardsAgainstHumanityContentPure extends React.Component<CardsAgainstHumani
                     questionId={questionId}
                     players={players}
                     answers={answersToQuestion}
+                    addNewQuestionAvailable={!currentTurnData?.newQuestionWasAdded}
+                    forwardQuestionAvailable={!currentTurnData?.newQuestionWasAdded && !currentTurnData?.questionWasForwarded}
                 />
             )
         } else {

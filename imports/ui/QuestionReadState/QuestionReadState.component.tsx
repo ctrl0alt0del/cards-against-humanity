@@ -8,11 +8,14 @@ import ReactSwipe from 'react-swipe';
 import { Meteor } from "meteor/meteor";
 import { GameButton } from '../Helpers/GameButton';
 import { meteorCall, vibrate } from "/imports/utils/Common.utils";
+import { QuickAnswerCreator } from "./QuickQuestionCreator/QuickQuestionCreator.component";
 
 type QuestionReadStatePropsType = {
     questionId: string,
     players: PlayerType<CAHGameData>[],
-    answers?: CAHTurnAnswersData[]
+    answers?: CAHTurnAnswersData[],
+    addNewQuestionAvailable: boolean,
+    forwardQuestionAvailable: boolean
 }
 
 type QuestionReadStateStateType = {
@@ -25,11 +28,11 @@ export class QuestionReadState extends React.Component<QuestionReadStatePropsTyp
     private preventMultipleClickOnSelectButton = false;
 
     onSelectAnswerButtonClick(playerId: string) {
-        if(this.preventMultipleClickOnSelectButton) {
+        if (this.preventMultipleClickOnSelectButton) {
             return;
         }
         this.preventMultipleClickOnSelectButton = true;
-        setTimeout(()=>{
+        setTimeout(() => {
             this.preventMultipleClickOnSelectButton = false;
         }, 2000)
         return meteorCall("selectBestAnswerForCurrentQuestion", playerId)
@@ -43,8 +46,12 @@ export class QuestionReadState extends React.Component<QuestionReadStatePropsTyp
         }
     }
 
+    private switchToNextQuestion = () => {
+        meteorCall("switchToNextQuestion");
+    }
+
     render() {
-        const { questionId, players, answers } = this.props;
+        const { questionId, players, answers, addNewQuestionAvailable, forwardQuestionAvailable } = this.props;
         return (
             <div id="question-read-state-wrapper">
                 <div id="read-question-wrapper">
@@ -56,9 +63,19 @@ export class QuestionReadState extends React.Component<QuestionReadStatePropsTyp
                 </div>
                 {
                     answers.length !== (players.length - 1) ? (
-                        <div id="answering-status-line">
-                            <PlayersInfo players={players} infoType={DisplayPlayersInfoTypeEnum.Answered} />
-                        </div>
+                        <React.Fragment>
+                            <div id="answering-status-line">
+                                <PlayersInfo players={players} infoType={DisplayPlayersInfoTypeEnum.Answered} />
+                            </div>
+                            <div id="quick-answer-creator-wrapper">
+                                {addNewQuestionAvailable && <QuickAnswerCreator />}
+                                {forwardQuestionAvailable && (
+                                    <GameButton onClick={this.switchToNextQuestion}>
+                                        <i className="fas fa-forward" />
+                                    </GameButton>
+                                )}
+                            </div>
+                        </React.Fragment>
                     ) : (
                             <div id="answers-line">
                                 <ReactSwipe swipeOptions={SwipeOptions}>
@@ -77,7 +94,7 @@ export class QuestionReadState extends React.Component<QuestionReadStatePropsTyp
                                                             />
                                                         )
                                                     })}
-                                                    
+
                                                 </div>
                                                 <div className="select-best-answer-button-wrapper">
                                                     <GameButton onClick={() => this.onSelectAnswerButtonClick(playerId)}>

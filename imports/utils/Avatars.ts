@@ -46,6 +46,10 @@ export const Avatars = [
     {
         id: 'diana',
         src: '/photo_2019-09-12_23-10-27.jpg'
+    },
+    {
+        id: "denBrat",
+        src: "/8-D4-CCFF6-E8-C1-47-A4-AA0-A-DEDA0-B00-CF1-A.jpg"
     }
 ];
 

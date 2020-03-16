@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.7.6",
+    "caman": "^4.1.2",
     "http-proxy": "^1.18.0",
     "lodash": "^4.17.15",
     "meteor-node-stubs": "^1.0.0",

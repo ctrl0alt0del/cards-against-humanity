@@ -21,6 +21,8 @@ export type CAHTurnType = {
     readerId: string,
     questionId: string,
     answers: CAHTurnAnswersData[],
+    newQuestionWasAdded?: boolean,
+    questionWasForwarded?: boolean,
     sessionId: string
 }
 

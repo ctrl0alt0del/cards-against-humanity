@@ -2,14 +2,15 @@ import { Meteor } from "meteor/meteor";
 import { QuestionCollection } from './QuestionCollection';
 import { CAHManager } from '../CardsAgainsHumanity/GAHManager';
 import { PlayersManager } from '../Player/Player';
+import { AddNewQuestionType } from "/imports/utils/Constants";
 
 Meteor.methods({
     getQuestionById(id: string) {
         return QuestionCollection.findOne({ _id: id });
     },
 
-    addNewQuestion(text: string, insertIntoQueue: boolean) {
-        return CAHManager.addNewQuestion(text, insertIntoQueue);
+    addNewQuestion(text: string, type: AddNewQuestionType) {
+        return CAHManager.addNewQuestion(text, type, PlayersManager.getPlayerId(this));
     },
 
     deleteQuestion(id: string) {

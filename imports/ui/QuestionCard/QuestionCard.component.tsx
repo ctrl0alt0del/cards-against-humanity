@@ -19,6 +19,12 @@ export class QuestionCard extends React.Component<QuestionCardPropsType, Questio
         this.resolveQuestionData();
     }
 
+    componentDidUpdate(prevProps: QuestionCardPropsType){
+        if(prevProps.questionId !== this.props.questionId) {
+            this.resolveQuestionData();
+        }
+    }
+
     async resolveQuestionData() {
         const {
             questionId

@@ -38,6 +38,8 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
         newAnswerText: ''
     }
 
+    private rootElRef = null;
+
     componentDidUpdate(prevProps: AnswerListPropsType) {
         if (this.props.currentQuestionId && prevProps.currentQuestionId !== this.props.currentQuestionId) {
             this.resolveMaxAnswersForCurrentQuestion();
@@ -51,6 +53,12 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
             this.setState({
                 selectedAnswers: currMyAnswers.answersIdList
             })
+        }
+    }
+
+    componentDidMount() {
+        if (this.props.currentQuestionId) {
+            this.resolveMaxAnswersForCurrentQuestion();
         }
     }
 
@@ -76,13 +84,16 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
             return;
         }
         const draggableEl = event.target as HTMLElement;
-        const isDraggedOverArea = this.isElementOverSelectableArea(draggableEl);
+        const elRect = draggableEl.getBoundingClientRect();
+        const isDraggedOverArea = this.isElementOverSelectableArea(elRect);
         if (isDraggedOverArea) {
             if (this.state.dropableAreaHighlighted !== true) {
                 this.setState({
                     dropableAreaHighlighted: true
                 });
             }
+        } else if (this.isPageShouldBeScrolledUp(elRect)) {
+            this.rootElRef.scrollTo(0, this.rootElRef.scrollTop - 10);
         } else if (this.state.dropableAreaHighlighted !== false) {
             this.setState({ dropableAreaHighlighted: false })
         }
@@ -93,7 +104,8 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
             return false;
         } else {
             const draggableEl = event.target as HTMLElement;
-            const isDraggedOverArea = this.isElementOverSelectableArea(draggableEl);
+            const elRect = draggableEl.getBoundingClientRect();
+            const isDraggedOverArea = this.isElementOverSelectableArea(elRect);
             if (isDraggedOverArea) {
                 this.setState({
                     dropableAreaHighlighted: false
@@ -135,11 +147,15 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
         }
     }
 
-    private isElementOverSelectableArea(draggableEl: HTMLElement) {
-        const boundingRect = draggableEl.getBoundingClientRect();
+    private isElementOverSelectableArea(boundingRect: DOMRect) {
         const { top, height } = boundingRect;
-        const isDraggedOverArea = (top + height) / window.innerHeight < 0.3;
+        const isDraggedOverArea = this.rootElRef.scrollTop === 0 && (top + height) / window.innerHeight < 0.3;
         return isDraggedOverArea;
+    }
+
+    private isPageShouldBeScrolledUp(boundingRect: DOMRect) {
+        const { top, height } = boundingRect;
+        return this.rootElRef.scrollTop > 0 && (top + height) / window.innerHeight < 0.3;
     }
 
     private readonly closeNewAnswerDialog = (saved = false) => {
@@ -184,8 +200,9 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
         const myAnswerInTurn = turn?.answers.some(answerData => answerData.playerId === me?._id) || false;
         const jokerAvailable = me?.gameData?.jokersCount > 0;
         const answersToList = answers.filter(answer => !selectedAnswers.includes(answer));
+        const aspectRatioVal = 1 / (Math.ceil((answersToList.length + 1) / 2) + 1);
         return (
-            <div id="answer-pick-state-wrapper">
+            <div id="answer-pick-state-wrapper" ref={ref => this.rootElRef = ref}>
                 <div id="selected-answer-wrapper" className={selectedAnswerClass}>
                     {selectedAnswers && selectedAnswers.length > 0 ? (
                         selectedAnswers.map((answerIndex, i) => {
@@ -225,7 +242,7 @@ export class AnswerList extends React.Component<AnswerListPropsType, AnswerListS
                                         answerId={answerId}
                                         onDrag={this.onDragAnswerHandler}
                                         onDrop={(ev) => this.onDropAnswerHandler(answerId, ev)}
-                                        aspectRatio={answersToList.length + (jokerAvailable ? 1 : 0) > 6 ? .2 : .25}
+                                        aspectRatio={aspectRatioVal}
                                     />
                                 </div>
                             </ImmediateCSSTransition>

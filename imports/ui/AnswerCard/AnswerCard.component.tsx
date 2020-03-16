@@ -3,6 +3,7 @@ import { getAnswerById } from '/imports/utils/GameData.utils';
 import Draggable, { DraggableEventHandler, DraggableEvent } from 'react-draggable';
 import { safeHandler, meteorCall } from '/imports/utils/Common.utils';
 import { JOCKER_ANSWER_ID } from '/imports/utils/Constants';
+import { MAX_CARDS_IN_HAND } from '../../utils/Constants';
 
 type AnswerCardPropsType = {
     answerId: string,
@@ -80,7 +81,7 @@ export class AnswerCard extends React.Component<AnswerCardPropsType, AnswerCardS
 
     render() {
         const { answerText, overridePosition, isJocker } = this.state;
-        const aspectRatio = this.props.aspectRatio || 0.25;
+        const aspectRatio = this.props.aspectRatio || 1 / (Math.ceil(MAX_CARDS_IN_HAND / 2) + 1);
         const answerLength = answerText && typeof answerText === 'string' ? answerText.length : 0;
         const decreaseFontSize = answerLength > 15;
         const increaseFontSize = answerLength < 4;
@@ -99,7 +100,7 @@ export class AnswerCard extends React.Component<AnswerCardPropsType, AnswerCardS
                 onStop={this.onDragStop}
                 position={overridePosition}
             >
-                <div className="answer-card-wrapper" style={{ padding: `${aspectRatio * 100}% 6px` }}>
+                <div className="answer-card-wrapper">
                     {isJocker && (<i className="joker fas fa-mask" onClick={this.onJockerIconClick} />)}
                     <div className={"answer-card-text"} style={{ fontSize }}>
                         {answerText}

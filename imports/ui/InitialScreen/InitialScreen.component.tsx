@@ -6,6 +6,8 @@ import { ClientPlayer } from '/imports/utils/ClientPlayerManager';
 import Modal from 'react-awesome-modal';
 import { Avatars } from '../../utils/Avatars';
 import { GameButton } from '../Helpers/GameButton';
+import { PictureTacker } from '../PictureTaker/PictureTaker.component';
+import { AvatarCreator } from './AvatarCreator/AvatarCreator.component';
 
 type InitialScreenPropsType = {
     players: GeneralPlayerType[],
@@ -45,7 +47,7 @@ export class InitialScreen extends React.Component<InitialScreenPropsType, Initi
         });
     }
 
-    private setAvatar(avatarId: string) {
+    private readonly setAvatar = (avatarId: string) => {
         this.closeAvatarSelectionModal();
         Meteor.call("setAvatarForCurrentPlayer", avatarId, err => {
             if (err) {
@@ -63,13 +65,12 @@ export class InitialScreen extends React.Component<InitialScreenPropsType, Initi
     render() {
         const { players, me } = this.props;
         const { avatarModalOpened } = this.state;
-        const alreadyUsedAvatarsId = players.reduce((total, player) => player.avatarId ? total.concat(player.avatarId) : total,[])
+        const alreadyUsedAvatarsId = players.reduce((total, player) => player.avatarId ? total.concat(player.avatarId) : total, [])
         return (
             <div id="intial-content-wrapper">
                 <div id="connected-users-wrapper">
                     <PlayersInfo players={players} infoType={DisplayPlayersInfoTypeEnum.Ready} />
                 </div>
-
                 <div id="initials-screen-buttons-wrapper">
                     {me?.avatarId && (this.isReady ?
                         (
@@ -87,20 +88,10 @@ export class InitialScreen extends React.Component<InitialScreenPropsType, Initi
                     </GameButton>
                 </div>
                 <Modal visible={avatarModalOpened} width="90%" effecft="fadeInDown" onClickAway={this.closeAvatarSelectionModal}>
-                    <div id="avatar-selection-wrapper">
-                        <div id="avatar-selection-wrapper-content">
-                            {Avatars.map(avatarData => {
-                                if(alreadyUsedAvatarsId.includes(avatarData.id)) {
-                                    return null;
-                                }
-                                return (
-                                    <div className="avatar-selection-item" key={avatarData.id} onClick={() => this.setAvatar(avatarData.id)}>
-                                        <img src={avatarData.src} />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    <AvatarCreator
+                        alreadyUsedAvatarsId={alreadyUsedAvatarsId}
+                        onDefaultAvatarSelected={this.setAvatar}
+                    />
                 </Modal>
             </div>
         )
