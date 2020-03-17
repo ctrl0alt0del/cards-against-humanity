@@ -61,7 +61,7 @@ export class AvatarCreator extends React.Component<AvatarCreatorProps, AvatarCre
         } else {
             content = (
                 <React.Fragment>
-                    <PictureTacker />
+                    <PictureTacker onDone={this.switchDisplayMode}/>
                     <GameButton onClick={this.switchDisplayMode}>
                         Вибрати вже готовий
                     </GameButton>

@@ -1,13 +1,21 @@
 import React from 'react';
 import { GameButton } from '../Helpers/GameButton';
+import { startAnimationLoop, safeHandler } from '/imports/utils/Common.utils';
+import { QuickAlertContext } from "../QuickAlertContext";
+import { InjectContext } from '/imports/utils/React.utils';
 
 interface PictureTackerState {
     mediaStream: MediaStream,
     isPhotoTacken: boolean
 }
 
+interface PictureTackerProps {
+    quickAlert?: (text: string) => void,
+    onDone?: () => void
+}
 
-export class PictureTacker extends React.Component<{}, PictureTackerState>{
+@InjectContext({quickAlert: QuickAlertContext})
+export class PictureTacker extends React.Component<PictureTackerProps, PictureTackerState>{
 
     state: PictureTackerState = {
         mediaStream: null,
@@ -15,18 +23,23 @@ export class PictureTacker extends React.Component<{}, PictureTackerState>{
     }
 
     videoElement: HTMLVideoElement = null;
-    photoWidth: number = 0;
-    photoHeight: number = 0;
+    canvasElement: HTMLCanvasElement = null;
+    canvasContext: CanvasRenderingContext2D = null;
 
     componentDidMount() {
         this.requestCameraSource();
     }
 
     async requestCameraSource() {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-        this.setState({
-            mediaStream
-        })
+        try {
+            const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+            this.setState({
+                mediaStream
+            });
+        } catch(err) {
+            this.props.quickAlert('Немає доступу до камери');
+            safeHandler(this.props.onDone)();
+        }
     }
 
 
@@ -36,22 +49,33 @@ export class PictureTacker extends React.Component<{}, PictureTackerState>{
             videoElement.srcObject = mediaStream;
             videoElement.play();
             this.videoElement = videoElement;
+            startAnimationLoop(this.processVideoStream)
         }
     }
 
     private readonly handleCanvasElRef = (canvasElement: HTMLCanvasElement) => {
-        if (canvasElement && this.videoElement) {
-            const canvasCtx = canvasElement.getContext('2d');
-            canvasElement.width = this.photoWidth;
-            canvasElement.height = this.photoHeight;
-            canvasCtx.drawImage(this.videoElement, 0, 0, this.photoWidth, this.photoHeight);
-        }
+        this.canvasElement = canvasElement;
     }
 
-    private readonly takePicure = () => {
-        const { width, height } = this.videoElement.getBoundingClientRect();
-        this.photoHeight = height;
-        this.photoWidth = width;
+    private processVideoStream = () => {
+        const canvas = this.canvasElement;
+        if (canvas) {
+            if (!this.canvasContext) {
+                this.canvasContext = canvas.getContext('2d');
+            }
+            const ctx = this.canvasContext;
+            const { width, height } = this.videoElement.getBoundingClientRect();
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(this.videoElement, 0, 0, width, height);
+
+        }
+
+    }
+
+
+
+    private readonly takePicture = () => {
         this.setState({
             isPhotoTacken: true
         })
@@ -63,17 +87,16 @@ export class PictureTacker extends React.Component<{}, PictureTackerState>{
             <React.Fragment>
                 <div className="picture-tacker-wrapper">
                     {mediaStream && (
-                        !isPhotoTacken ? (
+                        <React.Fragment>
                             <video ref={this.handleVideoElementRef} />
-                        ) : (
-                                <canvas ref={this.handleCanvasElRef} />
-                            )
+                            <canvas ref={this.handleCanvasElRef} />
+                        </React.Fragment>
                     )}
                 </div>
 
                 {!isPhotoTacken && (
                     <div id="take-picture-wrapper">
-                        <GameButton onClick={this.takePicure}>
+                        <GameButton onClick={this.takePicture}>
                             <i className="fas fa-camera" />
                         </GameButton>
                     </div>

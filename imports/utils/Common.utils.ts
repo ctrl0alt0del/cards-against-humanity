@@ -40,3 +40,10 @@ export const EntityFetcher = <In, Out>(fn: (id: In) => Promise<Out>) => {
         });
     }
 }
+
+export function startAnimationLoop(fnToStart: () => void) {
+    requestAnimationFrame(()=>{
+        fnToStart();
+        startAnimationLoop(fnToStart);
+    })
+}

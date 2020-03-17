@@ -13,6 +13,7 @@ import { performAssHack } from '../utils/TrashUtils';
 import Modal from 'react-awesome-modal';
 import { GameButton } from './Helpers/GameButton';
 import { GeneralVotingType } from '../utils/VotingTypes';
+import { QuickAlertContext } from './QuickAlertContext';
 
 type AppPropsType = {
     players: GeneralPlayerType[],
@@ -41,7 +42,7 @@ class App extends React.Component<AppPropsType, AppStateType> {
         })
     }
 
-    quickAlert(text: string, callback: () => void) {
+    private readonly quickAlert = (text: string, callback?: () => void) => {
         this.setState({
             quickAlertData: { message: text, onClose: callback }
         })
@@ -80,7 +81,9 @@ class App extends React.Component<AppPropsType, AppStateType> {
         }
         return (
             <div id="app">
-                {appContent}
+                <QuickAlertContext.Provider value={this.quickAlert}>
+                    {appContent}
+                </QuickAlertContext.Provider>
                 <VotingDialog votings={votings} players={players} />
                 <Modal visible={!!quickAlertData} onClickAway={this.closeAlert}>
                     <div id="quick-alert-wrapper">
