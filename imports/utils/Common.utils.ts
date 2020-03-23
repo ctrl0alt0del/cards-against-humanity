@@ -17,7 +17,7 @@ export function playAudio(fileSrc: string) {
 }
 
 export function vibrate(msTime: number) {
-    if(navigator.vibrate){
+    if (navigator.vibrate) {
         navigator.vibrate(msTime);
     } else {
         playAudio('/noVIbrate.mp3');
@@ -30,8 +30,8 @@ export const safeHandler = (cb) => {
 
 export const EntityFetcher = <In, Out>(fn: (id: In) => Promise<Out>) => {
     const cacheMap = new Map<In, Out>();
-    return function(id: In) {
-        if(cacheMap.has(id)) {
+    return function (id: In) {
+        if (cacheMap.has(id)) {
             return Promise.resolve(cacheMap.get(id));
         }
         return fn(id).then(res => {
@@ -41,9 +41,16 @@ export const EntityFetcher = <In, Out>(fn: (id: In) => Promise<Out>) => {
     }
 }
 
-export function startAnimationLoop(fnToStart: () => void) {
-    requestAnimationFrame(()=>{
-        fnToStart();
-        startAnimationLoop(fnToStart);
-    })
+export function startAnimationLoop(fnToStart: () => void, interval = 0) {
+    if (interval === 0) {
+        requestAnimationFrame(() => {
+            fnToStart();
+            startAnimationLoop(fnToStart);
+        })
+    } else {
+        setInterval(()=>{
+            fnToStart();
+            startAnimationLoop(fnToStart, interval);
+        }, interval);
+    }
 }
